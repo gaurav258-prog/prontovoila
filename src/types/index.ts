@@ -20,12 +20,33 @@ export interface FormMeta {
   totalFields: number;
 }
 
+export interface FormAnalysis {
+  detectedLanguage: string;
+  detectedLanguageLabel: string;
+  formTitleOriginal: string;
+  formTitleTranslated: string;
+  summary: string;
+  mandatoryFields: FormField[];
+  optionalFields: FormField[];
+}
+
+export interface FollowUpQuestion {
+  fieldId: string;
+  label: string;
+  question: string;
+  type: FormField['type'];
+  options?: string[];
+  reason: string;
+}
+
 export interface FilledField {
   id: string;
   label: string;
   value: string;
   original?: string;
   skipped?: boolean;
+  confidence?: 'high' | 'medium' | 'low';
+  source?: 'freehand' | 'followup' | 'edited';
 }
 
 export interface ChatMessage {
@@ -33,7 +54,7 @@ export interface ChatMessage {
   text: string;
 }
 
-export type AppStep = 1 | 2 | 3 | 4;
+export type AppStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface SessionRecord {
   id?: number;

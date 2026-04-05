@@ -1,9 +1,27 @@
 import { useAppStore } from '../store/appStore';
+import { generateFilledFormPdf } from '../services/pdfGenerator';
 
 export default function ResultsStep() {
-  const { filledFields, formMeta, langLabel, langCode, file, reset } = useAppStore();
+  const { filledFields, formMeta, formAnalysis, langLabel, langCode, file, reset, setStep } = useAppStore();
 
   const filled = filledFields.filter((f) => !f.skipped);
+
+  const handleDownloadPdf = async () => {
+    const pdfBytes = await generateFilledFormPdf({
+      formAnalysis,
+      filledFields,
+      langLabel,
+      langCode,
+      fileName: file?.name,
+    });
+    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prontovoila-filled-${Date.now()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleDownloadJSON = () => {
     const data = {
@@ -43,7 +61,11 @@ export default function ResultsStep() {
 
   return (
     <div className="card fade-in">
-      <div className="res-header">
+      <div className="confirm-banner">
+        Form confirmed and finalized
+      </div>
+
+      <div className="res-header" style={{ marginTop: '1rem' }}>
         <div>
           <div className="res-title">{formMeta?.title || 'Form Results'}</div>
           <div className="res-lang">
@@ -53,6 +75,15 @@ export default function ResultsStep() {
         <span className="badge badge-ok">
           {filled.length}/{filledFields.length} fields filled
         </span>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" style={{ width: '100%', padding: '14px 20px', fontSize: 14 }} onClick={handleDownloadPdf}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ verticalAlign: 'middle', marginRight: 8 }}>
+            <path d="M8 2v9m0 0l-3.5-3.5M8 11l3.5-3.5M2 14h12" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Download filled form (PDF)
+        </button>
       </div>
 
       <div className="dl-row" style={{ marginBottom: 20 }}>
@@ -86,6 +117,9 @@ export default function ResultsStep() {
       </div>
 
       <div className="btn-row">
+        <button className="btn btn-ghost" onClick={() => setStep(5)}>
+          Back to review
+        </button>
         <button className="btn btn-primary" onClick={reset}>
           Fill another form
         </button>

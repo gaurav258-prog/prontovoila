@@ -21,4 +21,4 @@ export const LANGUAGES: Language[] = [
   { c: 'da', l: 'Dansk', f: '\u{1F1E9}\u{1F1F0}' },
 ];
 
-export const STEPS = ['Upload', 'Language', 'Interview', 'Results'];
+export const STEPS = ['Upload', 'Detect', 'Briefing', 'Follow-up', 'Confirm', 'Results'];

@@ -1,8 +1,10 @@
 import Header from './components/Header';
 import StepBar from './components/StepBar';
 import UploadStep from './components/UploadStep';
-import LanguageStep from './components/LanguageStep';
-import InterviewStep from './components/InterviewStep';
+import DetectStep from './components/DetectStep';
+import BriefingStep from './components/BriefingStep';
+import FollowUpStep from './components/FollowUpStep';
+import ConfirmStep from './components/ConfirmStep';
 import ResultsStep from './components/ResultsStep';
 import { useAppStore } from './store/appStore';
 import './styles/app.css';
@@ -15,10 +17,14 @@ function App() {
       case 1:
         return <UploadStep />;
       case 2:
-        return <LanguageStep />;
+        return <DetectStep />;
       case 3:
-        return <InterviewStep />;
+        return <BriefingStep />;
       case 4:
+        return <FollowUpStep />;
+      case 5:
+        return <ConfirmStep />;
+      case 6:
         return <ResultsStep />;
       default:
         return <UploadStep />;

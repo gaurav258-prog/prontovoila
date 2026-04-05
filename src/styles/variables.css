@@ -1,27 +1,35 @@
 :root {
-  --ink: #0f0f0d;
-  --ink2: #3d3d38;
-  --ink3: #7a7a72;
-  --ink4: #b0afa8;
-  --paper: #faf9f6;
-  --paper2: #f2f1ed;
-  --paper3: #e8e7e2;
-  --accent: #224e7b;
-  --accent2: #3774a8;
+  --navy: #162f49;
+  --navy2: #1c3554;
+  --navy3: #24426e;
+  --gold: #c9a84c;
+  --gold2: #e8c96e;
+  --gold-dim: rgba(201, 168, 76, 0.12);
+  --gold-dim2: rgba(201, 168, 76, 0.06);
+  --cream: #f5f4f0;
+  --cream2: #eeede8;
+  --cream3: #e5e3dc;
+  --ink: #1a1a18;
+  --ink2: #3d3c38;
+  --ink3: #6b6a64;
+  --ink4: #9e9d96;
+  --ink5: #c8c7c0;
+  --border: #37516c;
+  --border-light: #dddbd3;
   --ok: #2d6a2d;
   --ok-bg: #edf5ed;
   --err: #8b1a1a;
   --err-bg: #fdf0f0;
   --warn: #7a4a00;
   --warn-bg: #fdf5e6;
-  --info: #224e7b;
-  --info-bg: #eef3f8;
-  --rad: 6px;
-  --rad-lg: 10px;
-  --serif: 'DM Serif Display', Georgia, serif;
-  --sans: 'DM Sans', system-ui, sans-serif;
+  --info: #162f49;
+  --info-bg: rgba(201, 168, 76, 0.08);
+  --rad: 7px;
+  --rad-lg: 14px;
+  --sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --mono: 'JetBrains Mono', monospace;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow: 0 2px 20px rgba(22, 47, 73, 0.12);
+  --shadow-lg: 0 8px 40px rgba(22, 47, 73, 0.18);
 }
 
 * {
@@ -36,9 +44,10 @@ html {
 
 body {
   font-family: var(--sans);
-  background: var(--paper);
+  background: #fff;
   color: var(--ink);
   font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }

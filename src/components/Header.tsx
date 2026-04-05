@@ -23,12 +23,16 @@ export default function Header() {
           <div className="tagline">Upload any form &middot; answer in your language &middot; get it filled</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, color: 'var(--ink4)' }}>
-            {apiKey ? 'Key set' : 'No API key'}
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+            {apiKey ? 'Key set' : ''}
           </span>
           <button
-            className="btn btn-ghost"
-            style={{ padding: '6px 12px', fontSize: 11 }}
+            style={{
+              padding: '7px 14px', fontSize: 12, fontWeight: 500,
+              border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6,
+              background: 'transparent', color: 'rgba(255,255,255,0.65)',
+              cursor: 'pointer', fontFamily: 'var(--sans)', transition: 'all 0.15s',
+            }}
             onClick={() => setShowPanel(!showPanel)}
           >
             API key

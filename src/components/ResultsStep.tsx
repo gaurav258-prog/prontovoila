@@ -1,13 +1,31 @@
 import { useAppStore } from '../store/appStore';
-import { generateFilledFormPdf } from '../services/pdfGenerator';
+import { generateOverlayPdf, generateSummaryPdf } from '../services/pdfGenerator';
 
 export default function ResultsStep() {
-  const { filledFields, formMeta, formAnalysis, langLabel, langCode, file, reset, setStep } = useAppStore();
+  const { filledFields, fields, formMeta, formAnalysis, langLabel, langCode, file, fileB64, fileMime, signatures, reset, setStep } = useAppStore();
 
   const filled = filledFields.filter((f) => !f.skipped);
 
-  const handleDownloadPdf = async () => {
-    const pdfBytes = await generateFilledFormPdf({
+  const handleDownloadFilledPdf = async () => {
+    if (!fileB64 || !fileMime) return;
+    const pdfBytes = await generateOverlayPdf({
+      originalFileB64: fileB64,
+      originalFileMime: fileMime,
+      filledFields,
+      fields,
+      signatures,
+    });
+    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(file?.name || 'form').replace(/\.[^.]+$/, '')}-filled.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadSummaryPdf = async () => {
+    const pdfBytes = await generateSummaryPdf({
       formAnalysis,
       filledFields,
       langLabel,
@@ -18,7 +36,7 @@ export default function ResultsStep() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `prontovoila-filled-${Date.now()}.pdf`;
+    a.download = `prontovoila-summary-${Date.now()}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -44,21 +62,6 @@ export default function ResultsStep() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadCSV = () => {
-    const rows = [['Field', 'Value', 'Skipped']];
-    filledFields.forEach((f) => {
-      rows.push([f.label, f.value || '', f.skipped ? 'Yes' : 'No']);
-    });
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `prontovoila-${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="card fade-in">
       <div className="confirm-banner">
@@ -77,8 +80,8 @@ export default function ResultsStep() {
         </span>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <button className="btn btn-primary" style={{ width: '100%', padding: '14px 20px', fontSize: 14 }} onClick={handleDownloadPdf}>
+      <div style={{ marginBottom: 12 }}>
+        <button className="btn btn-primary" style={{ width: '100%', padding: '14px 20px', fontSize: 14 }} onClick={handleDownloadFilledPdf}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ verticalAlign: 'middle', marginRight: 8 }}>
             <path d="M8 2v9m0 0l-3.5-3.5M8 11l3.5-3.5M2 14h12" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -87,17 +90,17 @@ export default function ResultsStep() {
       </div>
 
       <div className="dl-row" style={{ marginBottom: 20 }}>
+        <button className="dl-btn" onClick={handleDownloadSummaryPdf}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M7 2v8m0 0l-3-3m3 3l3-3M2 12h10" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Summary PDF
+        </button>
         <button className="dl-btn" onClick={handleDownloadJSON}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M7 2v8m0 0l-3-3m3 3l3-3M2 12h10" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           JSON
-        </button>
-        <button className="dl-btn" onClick={handleDownloadCSV}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M7 2v8m0 0l-3-3m3 3l3-3M2 12h10" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          CSV
         </button>
       </div>
 

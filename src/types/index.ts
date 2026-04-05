@@ -4,14 +4,23 @@ export interface Language {
   f: string;
 }
 
+export interface FieldPosition {
+  page: number;
+  xPct: number;
+  yPct: number;
+  widthPct: number;
+  heightPct: number;
+}
+
 export interface FormField {
   id: string;
   label: string;
-  type: 'text' | 'yesno' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'iban';
+  type: 'text' | 'yesno' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'iban' | 'signature';
   options?: string[];
   required?: boolean;
   format?: string;
   question?: string;
+  position?: FieldPosition;
 }
 
 export interface FormMeta {
@@ -47,11 +56,21 @@ export interface FilledField {
   skipped?: boolean;
   confidence?: 'high' | 'medium' | 'low';
   source?: 'freehand' | 'followup' | 'edited';
+  position?: FieldPosition;
 }
 
 export interface ChatMessage {
   role: 'ai' | 'user';
   text: string;
+}
+
+export type SignatureMode = 'draw' | 'type' | 'after-print';
+
+export interface SignatureData {
+  fieldId: string;
+  mode: SignatureMode;
+  dataUrl: string | null;
+  typedName?: string;
 }
 
 export type AppStep = 1 | 2 | 3 | 4 | 5 | 6;

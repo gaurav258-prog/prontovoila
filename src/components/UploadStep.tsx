@@ -12,7 +12,7 @@ function getExt(name: string): string {
 }
 
 export default function UploadStep() {
-  const { file, setFile, setStep } = useAppStore();
+  const { file, setFile, setStep, testMode, setTestMode } = useAppStore();
   const [over, setOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +84,18 @@ export default function UploadStep() {
           </button>
         </div>
       )}
+
+      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <label style={{ fontSize: 12, color: 'var(--ink3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input
+            type="checkbox"
+            checked={testMode}
+            onChange={(e) => setTestMode(e.target.checked)}
+            style={{ cursor: 'pointer' }}
+          />
+          Test mode (no API calls — uses demo data)
+        </label>
+      </div>
 
       <div className="btn-row">
         <button className="btn btn-primary" disabled={!file} onClick={() => setStep(2)}>

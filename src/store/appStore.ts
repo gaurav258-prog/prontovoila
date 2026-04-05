@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppStep, FormField, FormMeta, FormAnalysis, FilledField, ChatMessage, FollowUpQuestion } from '../types';
+import type { AppStep, FormField, FormMeta, FormAnalysis, FilledField, ChatMessage, FollowUpQuestion, SignatureData } from '../types';
 
 interface AppState {
   step: AppStep;
@@ -18,10 +18,12 @@ interface AppState {
   followUpIdx: number;
   history: ChatMessage[];
   idx: number;
-  apiKey: string;
+  signatures: SignatureData[];
   userConfirmed: boolean;
+  testMode: boolean;
 
   setStep: (step: AppStep) => void;
+  setTestMode: (mode: boolean) => void;
   setFile: (file: File | null, b64: string | null, mime: string | null) => void;
   setLanguage: (code: string, label: string) => void;
   setFormMeta: (meta: FormMeta) => void;
@@ -36,7 +38,8 @@ interface AppState {
   setFollowUpQuestions: (questions: FollowUpQuestion[]) => void;
   setFollowUpIdx: (idx: number) => void;
   setIdx: (idx: number) => void;
-  setApiKey: (key: string) => void;
+  setSignatures: (sigs: SignatureData[]) => void;
+  updateSignature: (fieldId: string, data: Partial<SignatureData>) => void;
   setUserConfirmed: (confirmed: boolean) => void;
   reset: () => void;
 }
@@ -58,13 +61,15 @@ const initialState = {
   followUpIdx: 0,
   history: [],
   idx: 0,
-  apiKey: '',
+  signatures: [],
   userConfirmed: false,
+  testMode: false,
 };
 
 export const useAppStore = create<AppState>((set) => ({
   ...initialState,
   setStep: (step) => set({ step }),
+  setTestMode: (testMode) => set({ testMode }),
   setFile: (file, fileB64, fileMime) => set({ file, fileB64, fileMime }),
   setLanguage: (langCode, langLabel) => set({ langCode, langLabel }),
   setFormMeta: (formMeta) => set({ formMeta }),
@@ -86,10 +91,13 @@ export const useAppStore = create<AppState>((set) => ({
   setFollowUpQuestions: (followUpQuestions) => set({ followUpQuestions }),
   setFollowUpIdx: (followUpIdx) => set({ followUpIdx }),
   setIdx: (idx) => set({ idx }),
-  setApiKey: (key) => {
-    sessionStorage.setItem('pv_api_key', key);
-    set({ apiKey: key });
-  },
+  setSignatures: (signatures) => set({ signatures }),
+  updateSignature: (fieldId, data) =>
+    set((state) => ({
+      signatures: state.signatures.some((s) => s.fieldId === fieldId)
+        ? state.signatures.map((s) => s.fieldId === fieldId ? { ...s, ...data } : s)
+        : [...state.signatures, { fieldId, mode: 'draw', dataUrl: null, ...data } as SignatureData],
+    })),
   setUserConfirmed: (userConfirmed) => set({ userConfirmed }),
   reset: () => set(initialState),
 }));

@@ -1,5 +1,6 @@
 import type { Language } from '../types';
 
+// Main grid languages (shown as buttons)
 export const LANGUAGES: Language[] = [
   { c: 'en', l: 'English', f: '\u{1F1EC}\u{1F1E7}' },
   { c: 'de', l: 'Deutsch', f: '\u{1F1E9}\u{1F1EA}' },
@@ -19,6 +20,58 @@ export const LANGUAGES: Language[] = [
   { c: 'uk', l: '\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430', f: '\u{1F1FA}\u{1F1E6}' },
   { c: 'sv', l: 'Svenska', f: '\u{1F1F8}\u{1F1EA}' },
   { c: 'da', l: 'Dansk', f: '\u{1F1E9}\u{1F1F0}' },
+];
+
+// Extended list for search (includes English names for all languages)
+export const ALL_LANGUAGES: (Language & { en: string })[] = [
+  { c: 'en', l: 'English', en: 'English', f: '\u{1F1EC}\u{1F1E7}' },
+  { c: 'de', l: 'Deutsch', en: 'German', f: '\u{1F1E9}\u{1F1EA}' },
+  { c: 'fr', l: 'Fran\u00e7ais', en: 'French', f: '\u{1F1EB}\u{1F1F7}' },
+  { c: 'es', l: 'Espa\u00f1ol', en: 'Spanish', f: '\u{1F1EA}\u{1F1F8}' },
+  { c: 'it', l: 'Italiano', en: 'Italian', f: '\u{1F1EE}\u{1F1F9}' },
+  { c: 'pt', l: 'Portugu\u00eas', en: 'Portuguese', f: '\u{1F1F5}\u{1F1F9}' },
+  { c: 'nl', l: 'Nederlands', en: 'Dutch', f: '\u{1F1F3}\u{1F1F1}' },
+  { c: 'pl', l: 'Polski', en: 'Polish', f: '\u{1F1F5}\u{1F1F1}' },
+  { c: 'ar', l: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629', en: 'Arabic', f: '\u{1F1F8}\u{1F1E6}' },
+  { c: 'zh', l: '\u4e2d\u6587', en: 'Chinese', f: '\u{1F1E8}\u{1F1F3}' },
+  { c: 'ja', l: '\u65e5\u672c\u8a9e', en: 'Japanese', f: '\u{1F1EF}\u{1F1F5}' },
+  { c: 'hi', l: '\u0939\u093f\u0928\u094d\u0926\u0940', en: 'Hindi', f: '\u{1F1EE}\u{1F1F3}' },
+  { c: 'ru', l: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439', en: 'Russian', f: '\u{1F1F7}\u{1F1FA}' },
+  { c: 'tr', l: 'T\u00fcrk\u00e7e', en: 'Turkish', f: '\u{1F1F9}\u{1F1F7}' },
+  { c: 'ko', l: '\ud55c\uad6d\uc5b4', en: 'Korean', f: '\u{1F1F0}\u{1F1F7}' },
+  { c: 'uk', l: '\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430', en: 'Ukrainian', f: '\u{1F1FA}\u{1F1E6}' },
+  { c: 'sv', l: 'Svenska', en: 'Swedish', f: '\u{1F1F8}\u{1F1EA}' },
+  { c: 'da', l: 'Dansk', en: 'Danish', f: '\u{1F1E9}\u{1F1F0}' },
+  { c: 'fi', l: 'Suomi', en: 'Finnish', f: '\u{1F1EB}\u{1F1EE}' },
+  { c: 'no', l: 'Norsk', en: 'Norwegian', f: '\u{1F1F3}\u{1F1F4}' },
+  { c: 'el', l: '\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac', en: 'Greek', f: '\u{1F1EC}\u{1F1F7}' },
+  { c: 'cs', l: '\u010ce\u0161tina', en: 'Czech', f: '\u{1F1E8}\u{1F1FF}' },
+  { c: 'ro', l: 'Rom\u00e2n\u0103', en: 'Romanian', f: '\u{1F1F7}\u{1F1F4}' },
+  { c: 'hu', l: 'Magyar', en: 'Hungarian', f: '\u{1F1ED}\u{1F1FA}' },
+  { c: 'bg', l: '\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438', en: 'Bulgarian', f: '\u{1F1E7}\u{1F1EC}' },
+  { c: 'hr', l: 'Hrvatski', en: 'Croatian', f: '\u{1F1ED}\u{1F1F7}' },
+  { c: 'sk', l: 'Sloven\u010dina', en: 'Slovak', f: '\u{1F1F8}\u{1F1F0}' },
+  { c: 'sl', l: 'Sloven\u0161\u010dina', en: 'Slovenian', f: '\u{1F1F8}\u{1F1EE}' },
+  { c: 'sr', l: '\u0421\u0440\u043f\u0441\u043a\u0438', en: 'Serbian', f: '\u{1F1F7}\u{1F1F8}' },
+  { c: 'th', l: '\u0e44\u0e17\u0e22', en: 'Thai', f: '\u{1F1F9}\u{1F1ED}' },
+  { c: 'vi', l: 'Ti\u1ebfng Vi\u1ec7t', en: 'Vietnamese', f: '\u{1F1FB}\u{1F1F3}' },
+  { c: 'id', l: 'Bahasa Indonesia', en: 'Indonesian', f: '\u{1F1EE}\u{1F1E9}' },
+  { c: 'ms', l: 'Bahasa Melayu', en: 'Malay', f: '\u{1F1F2}\u{1F1FE}' },
+  { c: 'tl', l: 'Filipino', en: 'Filipino', f: '\u{1F1F5}\u{1F1ED}' },
+  { c: 'bn', l: '\u09AC\u09BE\u0982\u09B2\u09BE', en: 'Bengali', f: '\u{1F1E7}\u{1F1E9}' },
+  { c: 'ta', l: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD', en: 'Tamil', f: '\u{1F1EE}\u{1F1F3}' },
+  { c: 'te', l: '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41', en: 'Telugu', f: '\u{1F1EE}\u{1F1F3}' },
+  { c: 'ur', l: '\u0627\u0631\u062F\u0648', en: 'Urdu', f: '\u{1F1F5}\u{1F1F0}' },
+  { c: 'fa', l: '\u0641\u0627\u0631\u0633\u06CC', en: 'Persian', f: '\u{1F1EE}\u{1F1F7}' },
+  { c: 'he', l: '\u05E2\u05D1\u05E8\u05D9\u05EA', en: 'Hebrew', f: '\u{1F1EE}\u{1F1F1}' },
+  { c: 'sw', l: 'Kiswahili', en: 'Swahili', f: '\u{1F1F0}\u{1F1EA}' },
+  { c: 'am', l: '\u12A0\u121B\u122D\u129B', en: 'Amharic', f: '\u{1F1EA}\u{1F1F9}' },
+  { c: 'ne', l: '\u0928\u0947\u092A\u093E\u0932\u0940', en: 'Nepali', f: '\u{1F1F3}\u{1F1F5}' },
+  { c: 'si', l: '\u0DC3\u0DD2\u0D82\u0DC4\u0DBD', en: 'Sinhala', f: '\u{1F1F1}\u{1F1F0}' },
+  { c: 'ka', l: '\u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8', en: 'Georgian', f: '\u{1F1EC}\u{1F1EA}' },
+  { c: 'et', l: 'Eesti', en: 'Estonian', f: '\u{1F1EA}\u{1F1EA}' },
+  { c: 'lv', l: 'Latvie\u0161u', en: 'Latvian', f: '\u{1F1F1}\u{1F1FB}' },
+  { c: 'lt', l: 'Lietuvi\u0173', en: 'Lithuanian', f: '\u{1F1F1}\u{1F1F9}' },
 ];
 
 export const STEPS = ['Upload', 'Detect', 'Briefing', 'Follow-up', 'Confirm', 'Results'];

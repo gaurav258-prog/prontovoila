@@ -1,6 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/appStore';
 
+/** Clean user input to extract just the value, stripping conversational phrasing */
+function cleanValue(raw: string, fieldLabel: string): string {
+  let v = raw.trim();
+  // Remove common prefixes like "my X is", "birth place is", "it is", "its", etc.
+  const label = fieldLabel.toLowerCase();
+  const prefixes = [
+    new RegExp(`^(?:my\\s+)?${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?:is|:)\\s*`, 'i'),
+    /^(?:it(?:'s| is)|that(?:'s| is)|this is)\s+/i,
+    /^(?:my |the )?(?:birth\s*place|place of birth|born in|born at)\s+(?:is|:|-|was)\s*/i,
+    /^(?:my |the )?(?:name|full name)\s+(?:is|:|-)\s*/i,
+    /^(?:my |the )?(?:address|home address|residence)\s+(?:is|:|-)\s*/i,
+    /^(?:my |the )?(?:date|dob|birth date|date of birth)\s+(?:is|:|-)\s*/i,
+    /^(?:my |the )?(?:email|e-mail)\s+(?:is|:|-)\s*/i,
+    /^(?:my |the )?(?:phone|telephone|mobile|cell)\s+(?:is|:|-|number is)\s*/i,
+    /^(?:my |the )?(?:codice fiscale|tax code|fiscal code)\s+(?:is|:|-)\s*/i,
+  ];
+  for (const re of prefixes) {
+    v = v.replace(re, '');
+  }
+  return v.trim() || raw.trim();
+}
+
 export default function FollowUpStep() {
   const {
     followUpQuestions, followUpIdx, setFollowUpIdx,
@@ -47,13 +69,16 @@ export default function FollowUpStep() {
 
     addMessage({ role: 'user', text: value });
 
+    // Clean the value to extract just the data, not the sentence
+    const cleaned = cleanValue(value, current.label);
+
     // Add to filled fields
     const updated = [
       ...filledFields,
       {
         id: current.fieldId,
         label: current.label,
-        value: value.trim(),
+        value: cleaned,
         confidence: 'high' as const,
         source: 'followup' as const,
       },

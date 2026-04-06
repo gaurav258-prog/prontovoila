@@ -601,8 +601,7 @@ export default function LandingPage() {
                   <li className="pok">Unlimited forms</li>
                   <li className="pok">All 50+ languages</li>
                   <li className="pok">All export formats</li>
-                  <li className="pok">Full form history</li>
-                  <li className="pok">Form history &amp; re-download</li>
+                  <li className="pok">Full form history &amp; re-download</li>
                 </ul>
                 <button className="btn-pgold" onClick={() => navigate('/app')}>Start Pro &mdash; 14 days free</button>
               </div>

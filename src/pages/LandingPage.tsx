@@ -221,10 +221,7 @@ export default function LandingPage() {
               Bureaucracy in a foreign language shouldn&rsquo;t hold you back. ProntoVoil&agrave; helps expats, immigrants and international workers navigate official paperwork, tax filings and government processes &mdash; in any language.
             </p>
             <div className="hero-btns">
-              <button className="btn-gold" onClick={() => navigate('/app')}>
-                Get started free &rarr;
-              </button>
-              <a href="#services" className="btn-outline">Explore services</a>
+              <a href="#services" className="btn-gold">Explore services &darr;</a>
             </div>
             <div className="trust-row">
               <div className="tstat"><div className="tstat-n">50+</div><div className="tstat-l">Languages</div></div>

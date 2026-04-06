@@ -1,6 +1,7 @@
 import type { TaxSummary, BriefingStrings } from '../store/taxStore';
 import type { PersonalInfo, EmploymentIncome, WorkExpenses, InsurancePension, SpecialExpenses } from '../store/taxStore';
 import { TAX_RATES } from '../data/taxConstants';
+import { calcTaxResult, fmt } from '../utils/taxCalc';
 
 const API_KEY = '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';
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -94,92 +95,51 @@ export async function analyzeTaxSituation(
   insurance: InsurancePension,
   special: SpecialExpenses,
 ): Promise<TaxSummary> {
-  const rates = TAX_RATES[personal.taxYear] || TAX_RATES[2024];
+  // ── Step 1: deterministic calculation (§32a EStG formula) ─────────────────
+  const calc = calcTaxResult(personal, employment, expenses, insurance, special);
+  void TAX_RATES; // constants used via calcTaxResult
 
-  const systemPrompt = `You are a German tax advisor assistant for ProntoVoilà. Based on the provided data for an employed person in Germany, calculate an estimated tax refund or liability for tax year ${personal.taxYear}.
-
-Apply these German tax rules:
-- Grundfreibetrag: €${rates.grundfreibetrag}
-- Werbungskostenpauschale: €${rates.werbungskostenpauschale} (use itemized if higher)
-- Entfernungspauschale: €0.30/km first 20km, €0.38/km beyond
-- Homeoffice-Pauschale: €${rates.homeofficePauschalePerDay}/day, max €${rates.homeofficePauschaleMax}/year
-- Sonderausgaben-Pauschbetrag: €${rates.sonderausgabenPauschbetrag}
-- Sparerpauschbetrag: €${rates.sparerPauschbetragSingle} (single) / €${rates.sparerPauschbetragMarried} (married)
-- Handwerkerleistungen: 20% of labor costs, max €${rates.handwerkerleistungenMaxReduction} tax reduction
-- Haushaltsnahe Dienstleistungen: 20% of costs, max €${rates.haushaltsnaheDienstleistungenMaxReduction} tax reduction
-- Childcare: 2/3 of costs deductible, max €4,000 per child/year
-- German progressive income tax brackets apply
+  // ── Step 2: Claude generates narrative only — numbers are pre-calculated ──
+  const systemPrompt = `You are a German tax advisor assistant for ProntoVoilà. The tax refund/liability has already been calculated using the official §32a EStG formula. Your job is ONLY to write the narrative analysis, recommendations and next steps — do NOT recalculate or override the figures provided.
 
 Respond in the language with code "${langCode}". Include German terms in parentheses throughout.
 
-You MUST respond with a valid JSON object (no markdown, no code fences) with this exact structure:
+You MUST respond with a valid JSON object (no markdown, no code fences):
 {
-  "estimatedRefund": <positive number if refund, null if liability>,
-  "estimatedLiability": <positive number if owes, null if refund>,
-  "analysisText": "<detailed analysis in user's language, 3-5 paragraphs, with German terms in parentheses>",
-  "recommendations": ["<recommendation 1>", "<recommendation 2>", ...],
-  "nextSteps": ["<step 1>", "<step 2>", ...]
+  "analysisText": "<3-5 bullet points explaining the key drivers of this result — reference the exact figures provided>",
+  "recommendations": ["<actionable recommendation 1>", ...],
+  "nextSteps": ["<concrete next step 1>", ...]
 }`;
 
-  const userData = {
-    personal: {
-      taxYear: personal.taxYear,
-      steuerklasse: personal.steuerklasse,
-      maritalStatus: personal.maritalStatus,
-      religion: personal.religion,
-      numberOfChildren: special.numberOfChildren,
-    },
-    employment: {
-      grossSalary: employment.grossSalary,
-      lohnsteuerPaid: employment.lohnsteuerPaid,
-      solidaritaetszuschlag: employment.solidaritaetszuschlag,
-      kirchensteuerPaid: employment.kirchensteuerPaid,
-      socialSecurityEmployee: employment.socialSecurityEmployee,
-      additionalEmployments: employment.additionalEmployments,
-    },
-    expenses: {
-      commuteDistanceKm: expenses.commuteDistanceKm,
-      commuteDaysPerYear: expenses.commuteDaysPerYear,
-      commuteMethod: expenses.commuteMethod,
-      publicTransportCost: expenses.publicTransportCost,
-      homeOfficeDays: expenses.homeOfficeDays,
-      hasDedicatedRoom: expenses.hasDedicatedRoom,
-      dedicatedRoomCost: expenses.dedicatedRoomCost,
-      workEquipmentCosts: expenses.workEquipmentCosts,
-      trainingCosts: expenses.trainingCosts,
-      professionalLiterature: expenses.professionalLiterature,
-      unionDues: expenses.unionDues,
-      movingCosts: expenses.movingCosts,
-      hasDoubleHousehold: expenses.hasDoubleHousehold,
-      doubleHouseholdRent: expenses.doubleHouseholdRent,
-      doubleHouseholdMonths: expenses.doubleHouseholdMonths,
-    },
-    insurance: {
-      healthInsuranceType: insurance.healthInsuranceType,
-      healthInsurancePaid: insurance.healthInsurancePaid,
-      nursingInsurancePaid: insurance.nursingInsurancePaid,
-      pensionInsurancePaid: insurance.pensionInsurancePaid,
-      unemploymentInsurancePaid: insurance.unemploymentInsurancePaid,
-      privateHealthInsurance: insurance.privateHealthInsurance,
-      disabilityInsurance: insurance.disabilityInsurance,
-      liabilityInsurance: insurance.liabilityInsurance,
-      accidentInsurance: insurance.accidentInsurance,
-      riesterContributions: insurance.riesterContributions,
-      ruerupContributions: insurance.ruerupContributions,
-    },
-    special: {
-      donations: special.donations,
-      cleaningService: special.cleaningService,
-      gardeningService: special.gardeningService,
-      handwerkerleistungen: special.handwerkerleistungen,
-      childcare: special.childcare,
-      numberOfChildren: special.numberOfChildren,
-      hasInvestmentIncome: special.hasInvestmentIncome,
-      investmentIncome: special.investmentIncome,
-      withheldAbgeltungssteuer: special.withheldAbgeltungssteuer,
-      sparerPauschbetragUsed: special.sparerPauschbetragUsed,
-    },
-  };
+  const calcSummary = `
+TAX YEAR: ${calc.year}
+Gross income (Bruttolohn): €${fmt(calc.grossSalary)}
+
+DEDUCTIONS APPLIED:
+- Werbungskosten used: €${fmt(calc.werbungskostenUsed)} (itemized: €${fmt(calc.totalWerbungskosten)}, Pauschbetrag: €${fmt(calc.werbungskostenpauschale)})
+  • Commute (Entfernungspauschale): €${fmt(calc.commuteCost)}
+  • Home office (Homeoffice-Pauschale): €${fmt(calc.homeOfficeCost)}
+  • Other work expenses: €${fmt(calc.otherWerbungskosten)}
+- Sonderausgaben used: €${fmt(calc.sonderausgabenUsed)} (itemized: €${fmt(calc.totalSonderausgaben)})
+  • Health insurance (Krankenversicherung): €${fmt(calc.healthInsuranceDeductible)}
+  • Nursing care (Pflegeversicherung): €${fmt(calc.nursingInsuranceDeductible)}
+  • Pension (Rentenversicherung): €${fmt(calc.pensionInsuranceDeductible)}
+  • Unemployment (Arbeitslosenversicherung): €${fmt(calc.unemploymentInsuranceDeductible)}
+  • Donations (Spenden): €${fmt(calc.donationsDeductible)}
+  • Childcare (Kinderbetreuung): €${fmt(calc.childcareDeductible)}
+
+TAXABLE INCOME (zvE): €${fmt(calc.zve)}
+Income tax before credits (§32a ESt): €${fmt(calc.einkommensteuerBeforeCredits)}
+§35a tax credits: €${fmt(calc.totalCredits)} (Haushaltsnahe: €${fmt(calc.haushaltsnahCredit)}, Handwerker: €${fmt(calc.handwerkerCredit)})
+Income tax assessed (Einkommensteuer): €${fmt(calc.einkommensteuer)}
+Solidarity surcharge (Solidaritätszuschlag): €${fmt(calc.solidaritaetszuschlagDue)}
+Church tax (Kirchensteuer): €${fmt(calc.kirchensteuerDue)}
+
+TOTAL TAX DUE: €${fmt(calc.totalTaxDue)}
+TOTAL ALREADY WITHHELD: €${fmt(calc.totalTaxWithheld)} (Lohnsteuer + Soli + Kirchensteuer from payslips)
+
+RESULT: ${calc.refund !== null ? `REFUND (Erstattung) of €${fmt(calc.refund)}` : `PAYMENT DUE (Nachzahlung) of €${fmt(calc.liability ?? 0)}`}
+`;
 
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -191,11 +151,11 @@ You MUST respond with a valid JSON object (no markdown, no code fences) with thi
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 2048,
       system: systemPrompt,
       messages: [{
         role: 'user',
-        content: `Analyze this tax data and provide an estimated refund or liability:\n\n${JSON.stringify(userData, null, 2)}`,
+        content: `Here are the pre-calculated tax figures. Write the analysis narrative, recommendations and next steps based on these exact numbers:\n\n${calcSummary}`,
       }],
     }),
   });
@@ -210,8 +170,8 @@ You MUST respond with a valid JSON object (no markdown, no code fences) with thi
   const parsed = JSON.parse(text);
 
   return {
-    estimatedRefund: parsed.estimatedRefund ?? null,
-    estimatedLiability: parsed.estimatedLiability ?? null,
+    estimatedRefund: calc.refund,
+    estimatedLiability: calc.liability,
     analysisText: parsed.analysisText || '',
     recommendations: parsed.recommendations || [],
     nextSteps: parsed.nextSteps || [],

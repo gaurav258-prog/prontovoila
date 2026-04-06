@@ -81,7 +81,8 @@ You MUST respond with a valid JSON object (no markdown, no code fences) with thi
   }
 
   const data = await res.json();
-  const parsed = JSON.parse(data.content[0].text);
+  const raw = data.content[0].text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+  const parsed = JSON.parse(raw);
   return parsed as BriefingResult;
 }
 
@@ -258,6 +259,7 @@ Rules:
   if (!res.ok) throw new Error(`UI translation failed: ${res.status}`);
 
   const data = await res.json();
-  const parsed = JSON.parse(data.content[0].text);
+  const raw = data.content[0].text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+  const parsed = JSON.parse(raw);
   return parsed as BriefingStrings;
 }

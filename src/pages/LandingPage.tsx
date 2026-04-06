@@ -636,7 +636,7 @@ export default function LandingPage() {
               </div>
               <div className="price-c">
                 <div className="plabel">Standard</div>
-                <div className="pamount">&euro;39</div>
+                <div className="pamount">&euro;49</div>
                 <div className="pperiod">per filing year</div>
                 <ul className="pfeats">
                   <li className="pok">Everything in Basic</li>
@@ -650,7 +650,7 @@ export default function LandingPage() {
               </div>
               <div className="price-c feat">
                 <div className="plabel">Complete</div>
-                <div className="pamount">&euro;69</div>
+                <div className="pamount">&euro;99</div>
                 <div className="pperiod">per filing year</div>
                 <ul className="pfeats">
                   <li className="pok">Everything in Standard</li>

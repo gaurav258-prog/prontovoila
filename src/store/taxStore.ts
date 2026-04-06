@@ -139,10 +139,21 @@ const defaultSpecial: SpecialExpenses = {
   withheldAbgeltungssteuer: 0, sparerPauschbetragUsed: false,
 };
 
+export interface BriefingStrings {
+  hint: string;
+  exampleText: string;
+  placeholder: string;
+  analyzeBtn: string;
+  skipBtn: string;
+  analyzingLabel: string;
+  analyzingSub: string;
+}
+
 interface TaxState {
   step: TaxStep;
   langCode: string;
   langLabel: string;
+  briefingStrings: BriefingStrings | null;
   briefingText: string;
   briefingParsed: boolean;
   personal: PersonalInfo;
@@ -156,6 +167,7 @@ interface TaxState {
 
   setStep: (step: TaxStep) => void;
   setLanguage: (code: string, label: string) => void;
+  setBriefingStrings: (strings: BriefingStrings) => void;
   setBriefingText: (text: string) => void;
   setBriefingParsed: (v: boolean) => void;
   updatePersonal: (data: Partial<PersonalInfo>) => void;
@@ -173,6 +185,7 @@ export const useTaxStore = create<TaxState>((set) => ({
   step: 1,
   langCode: 'en',
   langLabel: 'English',
+  briefingStrings: null,
   briefingText: '',
   briefingParsed: false,
   personal: { ...defaultPersonal },
@@ -185,7 +198,8 @@ export const useTaxStore = create<TaxState>((set) => ({
   error: null,
 
   setStep: (step) => set({ step }),
-  setLanguage: (code, label) => set({ langCode: code, langLabel: label }),
+  setLanguage: (code, label) => set({ langCode: code, langLabel: label, briefingStrings: null }),
+  setBriefingStrings: (strings) => set({ briefingStrings: strings }),
   setBriefingText: (text) => set({ briefingText: text }),
   setBriefingParsed: (v) => set({ briefingParsed: v }),
   updatePersonal: (data) => set((s) => ({ personal: { ...s.personal, ...data } })),
@@ -199,7 +213,7 @@ export const useTaxStore = create<TaxState>((set) => ({
   reset: () => set({
     step: 1,
     langCode: 'en', langLabel: 'English',
-    briefingText: '', briefingParsed: false,
+    briefingStrings: null, briefingText: '', briefingParsed: false,
     personal: { ...defaultPersonal },
     employment: { ...defaultEmployment },
     expenses: { ...defaultExpenses },

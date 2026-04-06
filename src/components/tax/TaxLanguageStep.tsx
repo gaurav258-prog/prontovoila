@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTaxStore } from '../../store/taxStore';
 import { LANGUAGES, ALL_LANGUAGES } from '../../data/languages';
+import { getUIStrings } from '../../services/taxAnalysis';
 
 export default function TaxLanguageStep() {
-  const { langCode, setLanguage, setStep } = useTaxStore();
+  const { langCode, langLabel, briefingStrings, setLanguage, setBriefingStrings, setStep } = useTaxStore();
   const [search, setSearch] = useState('');
+  const [translating, setTranslating] = useState(false);
 
   const filtered = search.trim()
     ? ALL_LANGUAGES.filter(
@@ -17,6 +19,36 @@ export default function TaxLanguageStep() {
   const select = (code: string, label: string) => {
     setLanguage(code, label);
   };
+
+  const handleContinue = async () => {
+    if (!langCode) return;
+    // English — no translation needed
+    if (langCode === 'en' || briefingStrings) {
+      setStep(2);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const strings = await getUIStrings(langLabel);
+      setBriefingStrings(strings);
+    } catch {
+      // On failure, fall back to English — still proceed
+    }
+    setTranslating(false);
+    setStep(2);
+  };
+
+  if (translating) {
+    return (
+      <div className="card fade-in">
+        <div className="spin-wrap">
+          <div className="spinner" />
+          <div className="spin-lbl">Preparing in {langLabel}…</div>
+          <div className="spin-sub">Translating the questionnaire into your language</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card fade-in">
@@ -64,7 +96,7 @@ export default function TaxLanguageStep() {
       </div>
 
       <div className="btn-row" style={{ marginTop: 24 }}>
-        <button className="btn btn-primary" onClick={() => setStep(2)} disabled={!langCode}>
+        <button className="btn btn-primary" onClick={handleContinue} disabled={!langCode}>
           Continue &rarr;
         </button>
       </div>

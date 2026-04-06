@@ -1,4 +1,4 @@
-import type { TaxSummary } from '../store/taxStore';
+import type { TaxSummary, BriefingStrings } from '../store/taxStore';
 import type { PersonalInfo, EmploymentIncome, WorkExpenses, InsurancePension, SpecialExpenses } from '../store/taxStore';
 import { TAX_RATES } from '../data/taxConstants';
 
@@ -216,4 +216,48 @@ You MUST respond with a valid JSON object (no markdown, no code fences) with thi
     nextSteps: parsed.nextSteps || [],
     generatedAt: new Date().toISOString(),
   };
+}
+
+export async function getUIStrings(langLabel: string): Promise<BriefingStrings> {
+  const prompt = `You are helping translate a German personal tax filing app into ${langLabel}.
+
+Translate the following UI strings into ${langLabel}. Respond with ONLY a valid JSON object (no markdown, no code fences).
+
+The strings to translate:
+{
+  "hint": "Describe your situation in your own words. For example: your job, salary, how you commute, whether you work from home, any insurance you pay, donations, children, etc. The more you share, the more we can pre-fill for you.",
+  "exampleText": "My name is Maria Santos, born on 15 March 1990. I live at Hauptstraße 42, 69115 Heidelberg. My tax ID is 12345678901. I work as a software engineer at SAP in Walldorf, earning €75,000 per year. They withheld about €15,800 in income tax and €870 solidarity surcharge. I drive 35km to work each day, about 220 days a year. I worked from home about 80 days last year. I bought a new laptop for €1,200 for work. I'm single, tax class 1, no church tax. I pay public health insurance — around €3,200 employee share, plus €1,100 nursing care and €7,200 pension. I donated €200 to UNICEF. I also paid €600 for a cleaning lady.",
+  "placeholder": "Describe your tax situation in ${langLabel}...",
+  "analyzeBtn": "Analyze & pre-fill →",
+  "skipBtn": "Skip — I'll fill manually",
+  "analyzingLabel": "Analyzing your information...",
+  "analyzingSub": "Extracting tax-relevant details from your description"
+}
+
+Rules:
+- Keep all numbers, euro amounts, German proper nouns (SAP, Walldorf, Heidelberg, UNICEF), and German tax terms (Steuerklasse, Solidaritätszuschlag, Kirchensteuer) as-is
+- Use a natural, culturally appropriate name for the example person that fits ${langLabel}-speaking culture (replace "Maria Santos" with a typical name from that culture)
+- The example text should read naturally as if a native ${langLabel} speaker wrote it
+- Return all 7 keys exactly as shown`;
+
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!res.ok) throw new Error(`UI translation failed: ${res.status}`);
+
+  const data = await res.json();
+  const parsed = JSON.parse(data.content[0].text);
+  return parsed as BriefingStrings;
 }

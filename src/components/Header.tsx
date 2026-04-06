@@ -6,7 +6,7 @@ interface HeaderProps {
   tagline?: string;
 }
 
-export default function Header({ onLogoClick, tagline = 'Upload any form \u00b7 answer in your language \u00b7 get it filled' }: HeaderProps) {
+export default function Header({ onLogoClick, tagline = 'Upload any form · answer in your language · get it filled' }: HeaderProps) {
   const navigate = useNavigate();
 
   const handleLogo = () => {

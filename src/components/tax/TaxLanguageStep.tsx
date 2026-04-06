@@ -29,7 +29,7 @@ export default function TaxLanguageStep() {
         {LANGUAGES.map((lang) => (
           <button
             key={lang.c}
-            className={`lang-btn ${langCode === lang.c ? 'active' : ''}`}
+            className={`lang-btn ${langCode === lang.c ? 'sel' : ''}`}
             onClick={() => select(lang.c, lang.l)}
           >
             <span className="lang-flag">{lang.f}</span>
@@ -50,7 +50,7 @@ export default function TaxLanguageStep() {
             {filtered.slice(0, 8).map((lang) => (
               <button
                 key={lang.c}
-                className={`lang-btn ${langCode === lang.c ? 'active' : ''}`}
+                className={`lang-btn ${langCode === lang.c ? 'sel' : ''}`}
                 onClick={() => { select(lang.c, lang.l); setSearch(''); }}
                 style={{ width: '100%', justifyContent: 'flex-start' }}
               >

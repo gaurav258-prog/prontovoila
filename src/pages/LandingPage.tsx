@@ -65,6 +65,7 @@ export default function LandingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [ctaEmail, setCtaEmail] = useState('');
+  const [pricingTab, setPricingTab] = useState<'forms' | 'tax'>('forms');
 
   // Scroll listener for nav
   useEffect(() => {
@@ -551,51 +552,118 @@ export default function LandingPage() {
         <div className="cont">
           <span className="sec-ey rv" style={{ display: 'block', textAlign: 'center' }}>Pricing</span>
           <h2 className="sec-h rv rv1" style={{ textAlign: 'center', marginBottom: '.5rem' }}>Transparent pricing</h2>
-          <p className="sec-p rv rv2" style={{ textAlign: 'center', margin: '0 auto 3rem' }}>Start free. No credit card required.</p>
-          <div className="pgrid rv rv3">
-            {/* Free */}
-            <div className="price-c">
-              <div className="plabel">Free</div>
-              <div className="pamount">&euro;0</div>
-              <div className="pperiod">No time limit</div>
-              <ul className="pfeats">
-                <li className="pok">3 forms per month</li>
-                <li className="pok">All 50+ languages</li>
-                <li className="pok">PDF and Word download</li>
-                <li className="pno">Form history</li>
-                <li className="pno">API access</li>
-              </ul>
-              <a href="#cta" className="btn-pghost">Get started free</a>
-            </div>
-            {/* Pro */}
-            <div className="price-c feat">
-              <div className="plabel">Pro</div>
-              <div className="pamount">&euro;9</div>
-              <div className="pperiod">per month, billed annually</div>
-              <ul className="pfeats">
-                <li className="pok">Unlimited forms</li>
-                <li className="pok">All 50+ languages</li>
-                <li className="pok">All export formats</li>
-                <li className="pok">Full form history</li>
-                <li className="pok">Priority processing</li>
-              </ul>
-              <a href="#cta" className="btn-pgold">Start Pro &mdash; 14 days free</a>
-            </div>
-            {/* Enterprise */}
-            <div className="price-c">
-              <div className="plabel">Enterprise</div>
-              <div className="pamount" style={{ fontSize: '28px', paddingTop: '8px' }}>Custom</div>
-              <div className="pperiod">Volume pricing available</div>
-              <ul className="pfeats">
-                <li className="pok">Unlimited users</li>
-                <li className="pok">Full API access</li>
-                <li className="pok">Bulk processing</li>
-                <li className="pok">White-label option</li>
-                <li className="pok">Dedicated support</li>
-              </ul>
-              <a href="#cta" className="btn-pghost">Contact sales &rarr;</a>
+          <p className="sec-p rv rv2" style={{ textAlign: 'center', margin: '0 auto 2rem' }}>Start free. No credit card required.</p>
+
+          {/* Tab toggle */}
+          <div className="rv rv2" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'inline-flex', background: 'var(--cream2)', borderRadius: 40, padding: 4, gap: 4 }}>
+              <button
+                onClick={() => setPricingTab('forms')}
+                style={{
+                  padding: '8px 22px', borderRadius: 36, border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 600, transition: 'all .2s',
+                  background: pricingTab === 'forms' ? 'var(--navy)' : 'transparent',
+                  color: pricingTab === 'forms' ? '#fff' : 'var(--ink3)',
+                }}
+              >Form Translation</button>
+              <button
+                onClick={() => setPricingTab('tax')}
+                style={{
+                  padding: '8px 22px', borderRadius: 36, border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 600, transition: 'all .2s',
+                  background: pricingTab === 'tax' ? 'var(--navy)' : 'transparent',
+                  color: pricingTab === 'tax' ? '#fff' : 'var(--ink3)',
+                }}
+              >Tax Filing</button>
             </div>
           </div>
+
+          {pricingTab === 'forms' ? (
+            <div className="pgrid rv rv3">
+              <div className="price-c">
+                <div className="plabel">Free</div>
+                <div className="pamount">&euro;0</div>
+                <div className="pperiod">No time limit</div>
+                <ul className="pfeats">
+                  <li className="pok">3 forms per month</li>
+                  <li className="pok">All 50+ languages</li>
+                  <li className="pok">PDF and Word download</li>
+                  <li className="pno">Form history</li>
+                  <li className="pno">API access</li>
+                </ul>
+                <button className="btn-pghost" onClick={() => navigate('/app')}>Get started free</button>
+              </div>
+              <div className="price-c feat">
+                <div className="plabel">Pro</div>
+                <div className="pamount">&euro;9</div>
+                <div className="pperiod">per month, billed annually</div>
+                <ul className="pfeats">
+                  <li className="pok">Unlimited forms</li>
+                  <li className="pok">All 50+ languages</li>
+                  <li className="pok">All export formats</li>
+                  <li className="pok">Full form history</li>
+                  <li className="pok">Priority processing</li>
+                </ul>
+                <button className="btn-pgold" onClick={() => navigate('/app')}>Start Pro &mdash; 14 days free</button>
+              </div>
+              <div className="price-c">
+                <div className="plabel">Enterprise</div>
+                <div className="pamount" style={{ fontSize: '28px', paddingTop: '8px' }}>Custom</div>
+                <div className="pperiod">Volume pricing available</div>
+                <ul className="pfeats">
+                  <li className="pok">Unlimited users</li>
+                  <li className="pok">Full API access</li>
+                  <li className="pok">Bulk processing</li>
+                  <li className="pok">White-label option</li>
+                  <li className="pok">Dedicated support</li>
+                </ul>
+                <a href="#cta" className="btn-pghost">Contact sales &rarr;</a>
+              </div>
+            </div>
+          ) : (
+            <div className="pgrid rv rv3">
+              <div className="price-c">
+                <div className="plabel">Free</div>
+                <div className="pamount">&euro;0</div>
+                <div className="pperiod">Every year</div>
+                <ul className="pfeats">
+                  <li className="pok">1 tax return per year</li>
+                  <li className="pok">Germany (more coming)</li>
+                  <li className="pok">AI-powered analysis</li>
+                  <li className="pok">Estimated refund calculation</li>
+                  <li className="pno">Filing history</li>
+                  <li className="pno">ELSTER direct submission</li>
+                </ul>
+                <button className="btn-pghost" onClick={() => navigate('/tax')}>File for free &rarr;</button>
+              </div>
+              <div className="price-c feat">
+                <div className="plabel">Pro</div>
+                <div className="pamount">&euro;19</div>
+                <div className="pperiod">per year, per country</div>
+                <ul className="pfeats">
+                  <li className="pok">Unlimited tax returns</li>
+                  <li className="pok">Multi-year filing history</li>
+                  <li className="pok">Priority AI analysis</li>
+                  <li className="pok">Document storage</li>
+                  <li className="pok">ELSTER direct submission</li>
+                </ul>
+                <button className="btn-pgold" onClick={() => navigate('/tax')}>Start Pro &mdash; first year free</button>
+              </div>
+              <div className="price-c">
+                <div className="plabel">Multi-country</div>
+                <div className="pamount" style={{ fontSize: '28px', paddingTop: '8px' }}>Custom</div>
+                <div className="pperiod">Multiple countries</div>
+                <ul className="pfeats">
+                  <li className="pok">All available countries</li>
+                  <li className="pok">Cross-border tax advice</li>
+                  <li className="pok">Dedicated tax specialist</li>
+                  <li className="pok">Steuerberater referral network</li>
+                  <li className="pok">Priority support</li>
+                </ul>
+                <a href="#cta" className="btn-pghost">Contact us &rarr;</a>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

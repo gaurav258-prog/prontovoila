@@ -1,12 +1,12 @@
 import type { FormField, FormAnalysis, FilledField, FollowUpQuestion } from '../types';
 
 export const DEMO_FIELDS: FormField[] = [
-  { id: 'nome_cognome', label: 'Full Name', type: 'text', required: true, question: 'What is your full name (first and last)?' },
-  { id: 'data_nascita', label: 'Date of Birth', type: 'date', required: true, question: 'What is your date of birth?', format: 'DD/MM/YYYY' },
-  { id: 'luogo_nascita', label: 'Place of Birth', type: 'text', required: true, question: 'Where were you born? (City, Province, Country)' },
-  { id: 'codice_fiscale', label: 'Tax Code (Codice Fiscale)', type: 'text', required: true, question: 'What is your Codice Fiscale (Italian tax code, 16 characters)?' },
-  { id: 'indirizzo_residenza', label: 'Residential Address in Milan', type: 'text', required: true, question: 'What is your residential address in Milan? (Street, Number, CAP)' },
-  { id: 'firma', label: 'Signature', type: 'signature', required: true, question: 'Please provide your signature.' },
+  { id: 'nome_cognome', label: 'Full Name', labelOriginal: 'Nome e Cognome', type: 'text', required: true, question: 'What is your full name (first and last)?' },
+  { id: 'data_nascita', label: 'Date of Birth', labelOriginal: 'Data di Nascita', type: 'date', required: true, question: 'What is your date of birth?', format: 'DD/MM/YYYY' },
+  { id: 'luogo_nascita', label: 'Place of Birth', labelOriginal: 'Luogo di Nascita', type: 'text', required: true, question: 'Where were you born? (City, Province, Country)' },
+  { id: 'codice_fiscale', label: 'Tax Code (Codice Fiscale)', labelOriginal: 'Codice Fiscale', type: 'text', required: true, question: 'What is your Codice Fiscale (Italian tax code, 16 characters)?' },
+  { id: 'indirizzo_residenza', label: 'Residential Address in Milan', labelOriginal: 'Indirizzo di Residenza a Milano', type: 'text', required: true, question: 'What is your residential address in Milan? (Street, Number, CAP)?' },
+  { id: 'firma', label: 'Signature', labelOriginal: 'Firma del Dichiarante', type: 'signature', required: true, question: 'Please provide your signature.' },
 ];
 
 export function simulateFormAnalysis(): Promise<FormAnalysis> {

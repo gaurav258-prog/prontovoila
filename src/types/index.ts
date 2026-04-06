@@ -15,6 +15,7 @@ export interface FieldPosition {
 export interface FormField {
   id: string;
   label: string;
+  labelOriginal?: string; // Label in the form's original language (for position matching)
   type: 'text' | 'yesno' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'iban' | 'signature';
   options?: string[];
   required?: boolean;

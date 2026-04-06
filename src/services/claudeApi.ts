@@ -49,6 +49,7 @@ Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
     {
       "id": "snake_case_field_id",
       "label": "Human readable label in English",
+      "labelOriginal": "Label exactly as written on the form in the original language",
       "type": "text|date|email|phone|number|yesno|select|signature",
       "required": true,
       "format": "expected format hint if applicable (e.g. DD/MM/YYYY)",
@@ -67,7 +68,12 @@ CRITICAL rules:
 - Mark fields as required based on visual indicators (asterisks, bold, "required" text) or your best judgment
 - The "question" should be a natural, conversational way to ask for that information
 - Keep field IDs unique and descriptive in snake_case
-- Do NOT include position coordinates — just the field order`;
+
+LABEL RULES:
+- "labelOriginal" must be the EXACT text of the field label as it appears on the form, in the form's original language. This is critical — we use it to locate the field on the form programmatically.
+- Copy the label text verbatim from the form. For example, if the form says "Nome e Cognome", use exactly "Nome e Cognome" (not "Nome e cognome" or "Nome E Cognome").
+- Do NOT include numbering prefixes like "1." or "2." — just the label text itself.
+- For fields with sub-labels like "(GG/MM/AAAA)", include only the main label, not the sub-label.`;
 
   const isImage = fileMime.startsWith('image/');
   const mediaType = isImage ? fileMime : 'image/png';
@@ -104,6 +110,7 @@ CRITICAL rules:
   const fields: FormField[] = parsed.fields.map((f: any) => ({
     id: f.id,
     label: f.label,
+    labelOriginal: f.labelOriginal || f.label,
     type: f.type || 'text',
     required: f.required ?? true,
     format: f.format,

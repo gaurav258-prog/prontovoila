@@ -1,44 +1,18 @@
-import Header from './components/Header';
-import StepBar from './components/StepBar';
-import UploadStep from './components/UploadStep';
-import DetectStep from './components/DetectStep';
-import BriefingStep from './components/BriefingStep';
-import FollowUpStep from './components/FollowUpStep';
-import ConfirmStep from './components/ConfirmStep';
-import ResultsStep from './components/ResultsStep';
-import { useAppStore } from './store/appStore';
-import './styles/app.css';
+import { Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import AppPage from './pages/AppPage';
+import TaxPage from './pages/TaxPage';
+// import ProtectedRoute from './components/ProtectedRoute'; // temporarily disabled
 
 function App() {
-  const step = useAppStore((s) => s.step);
-
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return <UploadStep />;
-      case 2:
-        return <DetectStep />;
-      case 3:
-        return <BriefingStep />;
-      case 4:
-        return <FollowUpStep />;
-      case 5:
-        return <ConfirmStep />;
-      case 6:
-        return <ResultsStep />;
-      default:
-        return <UploadStep />;
-    }
-  };
-
   return (
-    <div className="shell">
-      <Header />
-      <StepBar />
-      <div className="fade-in" key={step}>
-        {renderStep()}
-      </div>
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/app" element={<AppPage />} />
+      <Route path="/tax" element={<TaxPage />} />
+    </Routes>
   );
 }
 

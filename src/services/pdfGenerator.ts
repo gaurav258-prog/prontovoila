@@ -8,13 +8,95 @@ const INK3 = rgb(107 / 255, 106 / 255, 100 / 255);
 const CREAM = rgb(245 / 255, 244 / 255, 240 / 255);
 const WHITE = rgb(1, 1, 1);
 const DARK_BLUE = rgb(0.05, 0.05, 0.45);
-// const LIGHT_GRAY = rgb(0.7, 0.7, 0.7);
 
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
+}
+
+// ── Extract text positions from PDF using pdf.js ──
+
+interface TextItem {
+  str: string;
+  x: number;   // PDF x coordinate (from left)
+  y: number;   // PDF y coordinate (from bottom)
+  width: number;
+  page: number;
+}
+
+async function extractTextPositions(pdfBytes: Uint8Array): Promise<{ items: TextItem[]; pageHeights: number[]; pageWidths: number[] }> {
+  // Dynamically import pdfjs-dist to handle browser/worker setup
+  const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+
+  // Set up the worker - use a fake worker (inline) to avoid worker file issues
+  if (pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+  }
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: pdfBytes.slice(), // copy to avoid detached buffer issues
+    useSystemFonts: true,
+    isEvalSupported: false,
+    useWorkerFetch: false,
+    disableAutoFetch: true,
+  });
+
+  const doc = await loadingTask.promise;
+  const items: TextItem[] = [];
+  const pageHeights: number[] = [];
+  const pageWidths: number[] = [];
+
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const viewport = page.getViewport({ scale: 1.0 });
+    pageHeights.push(viewport.height);
+    pageWidths.push(viewport.width);
+
+    const textContent = await page.getTextContent();
+    for (const item of textContent.items) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ti = item as any;
+      if (!ti.str?.trim()) continue;
+      const tx = ti.transform?.[4] ?? 0;
+      const ty = ti.transform?.[5] ?? 0;
+      const w = ti.width ?? 0;
+      items.push({ str: ti.str, x: tx, y: ty, width: w, page: p - 1 });
+    }
+  }
+
+  return { items, pageHeights, pageWidths };
+}
+
+/**
+ * Find the best matching text item for a field label.
+ * Uses fuzzy matching to handle minor differences.
+ */
+function findLabelPosition(labelOriginal: string, textItems: TextItem[]): TextItem | null {
+  const needle = labelOriginal.toLowerCase().trim();
+
+  // Try exact substring match first
+  for (const item of textItems) {
+    if (item.str.toLowerCase().includes(needle)) return item;
+  }
+
+  // Try matching the first significant word(s) of the label
+  const words = needle.split(/\s+/).filter(w => w.length > 2);
+  if (words.length > 0) {
+    // Try matching the first 2+ words
+    for (const item of textItems) {
+      const itemLower = item.str.toLowerCase();
+      const matchCount = words.filter(w => itemLower.includes(w)).length;
+      if (matchCount >= Math.min(2, words.length)) return item;
+    }
+    // Try matching just the first significant word
+    for (const item of textItems) {
+      if (item.str.toLowerCase().includes(words[0])) return item;
+    }
+  }
+
+  return null;
 }
 
 // ── OVERLAY PDF: Fill the ORIGINAL form ──
@@ -32,9 +114,16 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const rawBytes = base64ToUint8Array(originalFileB64);
 
   let doc: PDFDocument;
+  let textPositions: { items: TextItem[]; pageHeights: number[]; pageWidths: number[] } | null = null;
 
   if (originalFileMime === 'application/pdf') {
     doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
+    // Extract text positions from the original PDF for label-anchored placement
+    try {
+      textPositions = await extractTextPositions(rawBytes);
+    } catch {
+      // Fall back to estimate-based positioning if text extraction fails
+    }
   } else {
     // Image: create a PDF with the image as background
     doc = await PDFDocument.create();
@@ -59,86 +148,92 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   // Separate data fields from signature fields
   const dataFields = fields.filter((f) => f.type !== 'signature');
   const sigFields = fields.filter((f) => f.type === 'signature');
+  const allFields = [...dataFields, ...sigFields];
 
-  // Get the first page dimensions
+  const fontSize = 10;
   const page0 = pages[0];
-  const pw = page0.getWidth();
   const ph = page0.getHeight();
 
-  // Determine the form area: typically forms have a header (top ~12%) and footer (bottom ~10%)
-  // Fields are distributed in the middle portion
-  const formTopPct = 0.28;   // Form fields typically start ~28% from top (after header/title/intro)
-  const formBottomPct = 0.82; // Form fields typically end ~82% from top (before footer/declaration)
-  const formTop = ph * (1 - formTopPct);    // PDF y coordinate for top of form area
-  const formBottom = ph * (1 - formBottomPct); // PDF y coordinate for bottom of form area
+  // Fallback: evenly distribute all fields in the form area (28%-82% from top)
+  const formTop = ph * 0.72;    // 28% from top = 72% from bottom
+  const formBottom = ph * 0.18;  // 82% from top = 18% from bottom
   const formHeight = formTop - formBottom;
+  const totalFields = allFields.length;
+  const fieldSpacing = totalFields > 1 ? formHeight / totalFields : formHeight / 2;
 
-  // If Claude provided positions, try to use them but with strong validation
-  // Otherwise, distribute fields evenly in the form area
-  const totalFields = dataFields.length + sigFields.length;
-  const fieldSpacing = totalFields > 1 ? formHeight / (totalFields) : formHeight / 2;
-
-  // Place text on the right side of the form (where input lines typically are)
-  const textX = pw * 0.42; // ~42% from left — where blank lines usually start
-  const maxTextWidth = pw * 0.52; // ~52% width for the text area
-  const fontSize = 10;
-
-  // Place each data field value
+  // Place each data field value — anchored to the label's actual position in the PDF
   dataFields.forEach((field, idx) => {
     const filled = filledFields.find((f) => f.id === field.id);
     if (!filled || filled.skipped || !filled.value) return;
 
-    const fieldPage = field.position?.page ?? 0;
-    const pageIdx = Math.min(fieldPage, pages.length - 1);
+    const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];
+    const pagePw = page.getWidth();
 
-    // Calculate Y position: distribute evenly from top to bottom of form area
-    // Each field gets a slot, and we place the value in the middle of that slot
+    let x: number;
     let y: number;
 
-    if (field.position && field.position.yPct > 0) {
-      // Use Claude's position but apply a strong correction
-      // Claude's yPct is from top of page. Convert to PDF coords (from bottom)
-      // Then nudge up by 1.5% to sit on the line instead of below it
-      y = ph - (field.position.yPct / 100) * ph + ph * 0.015;
+    // Try to find the label in the PDF text and anchor the value to it
+    const labelText = field.labelOriginal || field.label;
+    const labelItem = textPositions ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx)) : null;
+
+    if (labelItem) {
+      // Place value to the right of the label, on the same line
+      x = Math.max(labelItem.x + labelItem.width + 20, pagePw * 0.55);
+      y = labelItem.y;
+    } else if (field.position) {
+      // Fallback to Claude's estimated position
+      x = (field.position.xPct / 100) * pagePw;
+      y = page.getHeight() - (field.position.yPct / 100) * page.getHeight();
     } else {
-      // Fallback: evenly distribute
+      // Last resort: evenly distribute in the form area
+      x = pagePw * 0.55;
       y = formTop - (idx + 0.5) * fieldSpacing;
     }
+
+    const maxTextWidth = pagePw - x - 20;
 
     if (field.type === 'yesno') {
       const mark = filled.value.toLowerCase() === 'yes' ? 'X' : '';
       if (mark) {
-        page.drawText(mark, { x: textX, y, size: fontSize, font: fontBold, color: DARK_BLUE });
+        page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: DARK_BLUE });
       }
     } else {
       page.drawText(filled.value, {
-        x: textX,
+        x,
         y,
         size: fontSize,
         font,
         color: DARK_BLUE,
-        maxWidth: maxTextWidth,
+        maxWidth: maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4,
       });
     }
   });
 
-  // Place signatures
+  // Place signatures — also anchored to label position
   sigFields.forEach((field, idx) => {
     const sig = signatures.find((s) => s.fieldId === field.id);
     if (!sig) return;
 
-    const fieldPage = field.position?.page ?? 0;
-    const pageIdx = Math.min(fieldPage, pages.length - 1);
+    const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];
+    const pagePw = page.getWidth();
 
-    // Signature goes after all data fields
-    const sigIdx = dataFields.length + idx;
+    const labelText = field.labelOriginal || field.label;
+    const labelItem = textPositions ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx)) : null;
+
+    let x: number;
     let y: number;
 
-    if (field.position && field.position.yPct > 0) {
-      y = ph - (field.position.yPct / 100) * ph + ph * 0.015;
+    if (labelItem) {
+      x = Math.max(labelItem.x + labelItem.width + 20, pagePw * 0.55);
+      y = labelItem.y;
+    } else if (field.position) {
+      x = (field.position.xPct / 100) * pagePw;
+      y = page.getHeight() - (field.position.yPct / 100) * page.getHeight();
     } else {
+      x = pagePw * 0.55;
+      const sigIdx = dataFields.length + idx;
       y = formTop - (sigIdx + 0.5) * fieldSpacing;
     }
 
@@ -149,12 +244,12 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
       if (sigB64) {
         try {
           const sigBytes = base64ToUint8Array(sigB64);
-          // We'll embed synchronously by storing for later
-          embedSignature(doc, page, sigBytes, textX, y - 25, maxTextWidth * 0.5, 30);
+          const maxSigW = pagePw * 0.25;
+          embedSignature(doc, page, sigBytes, x, y - 25, maxSigW, 30);
         } catch {
           // Fallback: draw typed name
           if (sig.typedName) {
-            page.drawText(sig.typedName, { x: textX, y, size: 14, font, color: DARK_BLUE });
+            page.drawText(sig.typedName, { x, y, size: 14, font, color: DARK_BLUE });
           }
         }
       }

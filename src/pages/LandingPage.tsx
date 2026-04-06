@@ -628,7 +628,6 @@ export default function LandingPage() {
                 <div className="pperiod">Free, always</div>
                 <ul className="pfeats">
                   <li className="pok">Personal &amp; income info</li>
-                  <li className="pok">AI-powered tax summary</li>
                   <li className="pok">Estimated refund overview</li>
                   <li className="pno">Deduction calculations</li>
                   <li className="pno">Custom deduction claims</li>

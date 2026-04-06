@@ -623,44 +623,46 @@ export default function LandingPage() {
           ) : (
             <div className="pgrid rv rv3">
               <div className="price-c">
-                <div className="plabel">Free</div>
+                <div className="plabel">Basic</div>
                 <div className="pamount">&euro;0</div>
-                <div className="pperiod">Every year</div>
+                <div className="pperiod">Free, always</div>
                 <ul className="pfeats">
-                  <li className="pok">1 tax return per year</li>
-                  <li className="pok">Germany (more coming)</li>
-                  <li className="pok">AI-powered analysis</li>
-                  <li className="pok">Estimated refund calculation</li>
-                  <li className="pno">Filing history</li>
-                  <li className="pno">ELSTER direct submission</li>
+                  <li className="pok">Personal &amp; income info</li>
+                  <li className="pok">AI-powered tax summary</li>
+                  <li className="pok">Estimated refund overview</li>
+                  <li className="pno">Deduction calculations</li>
+                  <li className="pno">Custom deduction claims</li>
+                  <li className="pno">ELSTER submission</li>
                 </ul>
-                <button className="btn-pghost" onClick={() => navigate('/tax')}>File for free &rarr;</button>
-              </div>
-              <div className="price-c feat">
-                <div className="plabel">Pro</div>
-                <div className="pamount">&euro;19</div>
-                <div className="pperiod">per year, per country</div>
-                <ul className="pfeats">
-                  <li className="pok">Unlimited tax returns</li>
-                  <li className="pok">Multi-year filing history</li>
-                  <li className="pok">Priority AI analysis</li>
-                  <li className="pok">Document storage</li>
-                  <li className="pok">ELSTER direct submission</li>
-                </ul>
-                <button className="btn-pgold" onClick={() => navigate('/tax')}>Start Pro &mdash; first year free</button>
+                <button className="btn-pghost" onClick={() => navigate('/tax')}>Get started free</button>
               </div>
               <div className="price-c">
-                <div className="plabel">Multi-country</div>
-                <div className="pamount" style={{ fontSize: '28px', paddingTop: '8px' }}>Custom</div>
-                <div className="pperiod">Multiple countries</div>
+                <div className="plabel">Standard</div>
+                <div className="pamount">&euro;39</div>
+                <div className="pperiod">per filing year</div>
                 <ul className="pfeats">
-                  <li className="pok">All available countries</li>
-                  <li className="pok">Cross-border tax advice</li>
-                  <li className="pok">Dedicated tax specialist</li>
-                  <li className="pok">Steuerberater referral network</li>
+                  <li className="pok">Everything in Basic</li>
+                  <li className="pok">Common deductions (commute, home office, equipment)</li>
+                  <li className="pok">Custom deduction claims</li>
+                  <li className="pok">Insurance &amp; pension deductions</li>
+                  <li className="pok">Optimised refund calculation</li>
+                  <li className="pno">ELSTER direct submission</li>
+                </ul>
+                <button className="btn-pghost" onClick={() => navigate('/tax')}>Start Standard &rarr;</button>
+              </div>
+              <div className="price-c feat">
+                <div className="plabel">Complete</div>
+                <div className="pamount">&euro;69</div>
+                <div className="pperiod">per filing year</div>
+                <ul className="pfeats">
+                  <li className="pok">Everything in Standard</li>
+                  <li className="pok" style={{ fontWeight: 600, color: 'var(--navy)' }}>ELSTER direct submission</li>
+                  <li className="pok" style={{ fontWeight: 600, color: 'var(--navy)' }}>Official filing to Finanzamt</li>
+                  <li className="pok" style={{ fontWeight: 600, color: 'var(--navy)' }}>Submission confirmation</li>
+                  <li className="pok">Filing history &amp; document storage</li>
                   <li className="pok">Priority support</li>
                 </ul>
-                <a href="#cta" className="btn-pghost">Contact us &rarr;</a>
+                <button className="btn-pgold" onClick={() => navigate('/tax')}>File with ELSTER &rarr;</button>
               </div>
             </div>
           )}

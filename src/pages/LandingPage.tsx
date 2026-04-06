@@ -295,8 +295,8 @@ export default function LandingPage() {
                 <li>Employment &amp; HR documents</li>
                 <li>Legal &amp; notarial forms</li>
               </ul>
-              <button className="btn-gold" onClick={() => navigate('/app')} style={{ marginTop: 'auto' }}>
-                Upload a form &mdash; it&rsquo;s free &rarr;
+              <button className="btn-gold" onClick={() => { setPricingTab('forms'); document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ marginTop: 'auto' }}>
+                See pricing &amp; get started &rarr;
               </button>
             </div>
             <div className="svc-card svc-active">
@@ -313,8 +313,8 @@ export default function LandingPage() {
                 <li>Plain-language explanations</li>
                 <li>Multi-country support</li>
               </ul>
-              <button className="btn-gold" onClick={() => navigate('/tax')} style={{ marginTop: 'auto' }}>
-                File your taxes &mdash; it&rsquo;s free &rarr;
+              <button className="btn-gold" onClick={() => { setPricingTab('tax'); document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ marginTop: 'auto' }}>
+                See pricing &amp; get started &rarr;
               </button>
             </div>
           </div>

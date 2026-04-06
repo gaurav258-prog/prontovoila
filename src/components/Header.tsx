@@ -3,9 +3,10 @@ import ArchIcon from './ArchIcon';
 
 interface HeaderProps {
   onLogoClick?: () => void;
+  tagline?: string;
 }
 
-export default function Header({ onLogoClick }: HeaderProps) {
+export default function Header({ onLogoClick, tagline = 'Upload any form \u00b7 answer in your language \u00b7 get it filled' }: HeaderProps) {
   const navigate = useNavigate();
 
   const handleLogo = () => {
@@ -27,7 +28,7 @@ export default function Header({ onLogoClick }: HeaderProps) {
           <ArchIcon size={28} light />
           <div className="wordmark wordmark--light">Pronto<em>Voil&agrave;</em></div>
         </div>
-        <div className="tagline">Upload any form &middot; answer in your language &middot; get it filled</div>
+        <div className="tagline">{tagline}</div>
       </div>
     </header>
   );

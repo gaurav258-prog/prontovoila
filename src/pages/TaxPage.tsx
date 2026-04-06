@@ -89,7 +89,7 @@ export default function TaxPage() {
 
   return (
     <div className="shell">
-      <Header onLogoClick={handleLogoClick} />
+      <Header onLogoClick={handleLogoClick} tagline="German tax return \u00b7 guided in your language \u00b7 maximise your refund" />
       <div style={{ margin: '8px 0 16px', textAlign: 'center' }}>
         <span style={{ fontSize: 13, color: 'var(--ink3)', fontWeight: 500 }}>
           German Personal Tax Filing &middot; <span style={{ color: 'var(--ink4)' }}>Einkommensteuererkl&auml;rung</span>

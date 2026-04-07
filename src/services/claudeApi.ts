@@ -175,11 +175,31 @@ export async function analyzeForm(
   let systemPrompt: string;
 
   if (hasAcroFields) {
-    // PATH A: tell Claude the exact field names already in the PDF, with positions
+    // PATH A: tell Claude the exact field names already in the PDF, with positions and row groupings.
+    // Pre-compute which fields share a visual row (same page, y within 15pts) using the accurate
+    // PDF.js rects. Fields sharing a row are SEPARATE fields — never merged with splitIndex.
+    const separateFieldNames = new Set<string>();
+    const hasPositions = acroFields.some(f => f.rect.x > 0 || f.rect.y > 0);
+    if (hasPositions) {
+      for (let i = 0; i < acroFields.length; i++) {
+        for (let j = i + 1; j < acroFields.length; j++) {
+          const a = acroFields[i];
+          const b = acroFields[j];
+          if (a.rect.page !== b.rect.page) continue;
+          if (Math.abs(a.rect.y - b.rect.y) <= 15 && Math.abs(a.rect.x - b.rect.x) > 20) {
+            // These two fields are side-by-side on the same row → both are separate
+            separateFieldNames.add(a.name);
+            separateFieldNames.add(b.name);
+          }
+        }
+      }
+    }
+
     const fieldList = acroFields
       .map(f => {
         const pos = `"pos":{"x":${f.rect.x},"y":${f.rect.y},"w":${f.rect.width},"h":${f.rect.height},"page":${f.rect.page}}`;
-        const base = `{ "pdfFieldName": "${f.name}", "type": "${f.type}", ${pos}`;
+        const sep = separateFieldNames.has(f.name) ? ', "separate":true' : '';
+        const base = `{ "pdfFieldName": "${f.name}", "type": "${f.type}", ${pos}${sep}`;
         if (f.options && f.options.length > 0) {
           return `  ${base}, "options": ${JSON.stringify(f.options)} }`;
         }
@@ -227,6 +247,14 @@ CRITICAL rules:
 - For checkbox fields, type = "yesno"
 - For signature fields, type = "signature"
 - Do NOT include a "position" key — it is not needed for AcroForm PDFs
+
+"separate":true RULE — ABSOLUTE PRIORITY:
+Any field marked "separate":true in the list above has been CONFIRMED by code analysis to be a standalone field on the same row as another field. For these fields:
+- Create EXACTLY ONE entry with its own pdfFieldName
+- NEVER use splitIndex or splitPct on a "separate":true field
+- The field contains ONLY ONE data item (its own column's value)
+Example: if Text1 and Text2 are both "separate":true and are side-by-side, Text1 gets label "Last name" and Text2 gets label "First name" — two completely independent entries.
+Violating this rule will cause data to appear in the wrong column of the PDF.
 
 OPAQUE FIELD HANDLING — many PDFs have fields with generic names like "Text1", "Text22", "fill_1", "fill_8", "Check Box5", "Check Box6", etc. These names carry no semantic meaning. For each such field:
 1. Visually locate it on the form by its position (which row, which label is it next to)

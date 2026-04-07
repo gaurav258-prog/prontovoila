@@ -16,12 +16,18 @@ export interface FormField {
   id: string;
   label: string;
   labelOriginal?: string; // Label in the form's original language (for position matching)
-  type: 'text' | 'yesno' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'iban' | 'signature';
+  type: 'text' | 'yesno' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'radio' | 'iban' | 'signature';
   options?: string[];
   required?: boolean;
   format?: string;
   question?: string;
   position?: FieldPosition;
+  pdfFieldName?: string; // Exact AcroForm field name in the PDF — used for direct field filling
+  pdfFieldRect?: { width: number; height: number }; // actual PDF widget rectangle in pts
+  pdfFieldFontSize?: number; // font size from field /DA stream
+  splitIndex?: number; // 0-based position within a combined field (undefined = not split)
+  splitPct?: number; // % of field width this sub-column occupies (must sum to 100 across siblings)
+  pairedNeinPdfFieldName?: string; // for ja/nein checkbox pairs: the "nein" checkbox's pdfFieldName
 }
 
 export interface FormMeta {

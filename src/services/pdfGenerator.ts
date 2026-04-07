@@ -7,7 +7,7 @@ const INK = rgb(26 / 255, 26 / 255, 24 / 255);
 const INK3 = rgb(107 / 255, 106 / 255, 100 / 255);
 const CREAM = rgb(245 / 255, 244 / 255, 240 / 255);
 const WHITE = rgb(1, 1, 1);
-const DARK_BLUE = rgb(0.05, 0.05, 0.45);
+// DARK_BLUE removed — filled text now uses INK to match form's own typography;
 
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);
@@ -20,9 +20,10 @@ function base64ToUint8Array(b64: string): Uint8Array {
 
 interface TextItem {
   str: string;
-  x: number;   // PDF x coordinate (from left)
-  y: number;   // PDF y coordinate (from bottom)
+  x: number;       // PDF x coordinate (from left)
+  y: number;       // PDF y coordinate (from bottom)
   width: number;
+  fontSize: number; // Detected font size in points
   page: number;
 }
 
@@ -62,7 +63,13 @@ async function extractTextPositions(pdfBytes: Uint8Array): Promise<{ items: Text
       const tx = ti.transform?.[4] ?? 0;
       const ty = ti.transform?.[5] ?? 0;
       const w = ti.width ?? 0;
-      items.push({ str: ti.str, x: tx, y: ty, width: w, page: p - 1 });
+      // Font size: use item height if available, otherwise derive from transform matrix
+      // transform = [scaleX, skewX, skewY, scaleY, tx, ty] — scaleY ≈ font size for upright text
+      const detectedSize = ti.height
+        ? Math.abs(ti.height)
+        : Math.abs(ti.transform?.[3] ?? 0);
+      const fontSize = detectedSize > 0 ? detectedSize : 10;
+      items.push({ str: ti.str, x: tx, y: ty, width: w, fontSize, page: p - 1 });
     }
   }
 
@@ -70,32 +77,49 @@ async function extractTextPositions(pdfBytes: Uint8Array): Promise<{ items: Text
 }
 
 /**
+ * Estimate the font size to use for filled-in text on a given page.
+ * Looks at all body-text items on the page (excluding very small labels and very large headings)
+ * and returns the most common (mode) size, clamped to a sensible range.
+ */
+function detectBodyFontSize(pageItems: TextItem[]): number {
+  // Collect sizes that look like regular form body text (6–16pt)
+  const sizes = pageItems
+    .map(i => Math.round(i.fontSize))
+    .filter(s => s >= 6 && s <= 16);
+  if (sizes.length === 0) return 10;
+
+  // Return the mode (most frequent size)
+  const freq: Record<number, number> = {};
+  for (const s of sizes) freq[s] = (freq[s] ?? 0) + 1;
+  const mode = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+  return Number(mode[0]);
+}
+
+/**
  * Find the best matching text item for a field label.
- * Uses fuzzy matching to handle minor differences.
+ * Conservative matching only — avoids single-word matches that cause wrong-field placement.
  */
 function findLabelPosition(labelOriginal: string, textItems: TextItem[]): TextItem | null {
   const needle = labelOriginal.toLowerCase().trim();
 
-  // Try exact substring match first
+  // Tier 1: exact substring match
   for (const item of textItems) {
     if (item.str.toLowerCase().includes(needle)) return item;
   }
 
-  // Try matching the first significant word(s) of the label
+  // Tier 2: all significant words of the label are present in the text item
   const words = needle.split(/\s+/).filter(w => w.length > 2);
-  if (words.length > 0) {
-    // Try matching the first 2+ words
+  if (words.length >= 2) {
     for (const item of textItems) {
       const itemLower = item.str.toLowerCase();
       const matchCount = words.filter(w => itemLower.includes(w)).length;
-      if (matchCount >= Math.min(2, words.length)) return item;
-    }
-    // Try matching just the first significant word
-    for (const item of textItems) {
-      if (item.str.toLowerCase().includes(words[0])) return item;
+      // Require ALL words to match (not just 2), to avoid false positives
+      if (matchCount === words.length) return item;
     }
   }
 
+  // NOTE: Single-word fallback intentionally removed — it caused wrong-field placement
+  // when common words like "Name", "Datum", "Adresse" appeared in multiple labels.
   return null;
 }
 
@@ -107,18 +131,216 @@ export interface OverlayPdfOptions {
   filledFields: FilledField[];
   fields: FormField[];
   signatures: SignatureData[];
+  hasAcroFields?: boolean; // If true, fill using AcroForm fields by name (Path A)
 }
 
 export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Uint8Array> {
-  const { originalFileB64, originalFileMime, filledFields, fields, signatures } = options;
+  const { originalFileB64, originalFileMime, filledFields, fields, signatures, hasAcroFields } = options;
   const rawBytes = base64ToUint8Array(originalFileB64);
 
+  // ── PATH A: PDF with real AcroForm fields — fill by name, no guessing ──
+  if (hasAcroFields && originalFileMime === 'application/pdf') {
+    const doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
+    const form = doc.getForm();
+
+    // Embed Helvetica so we can regenerate appearance streams for auto-size and split fields
+    const helvetica = await doc.embedFont(StandardFonts.Helvetica);
+
+    // Build a reliable field rect map using PDF.js getAnnotations().
+    // pdf-lib's internal widget rect extraction is unreliable for many PDFs (returns 0 or throws).
+    // PDF.js getAnnotations() is purpose-built for rect extraction and works on any PDF structure.
+    const pdfJsFieldRects = new Map<string, { width: number; height: number }>();
+    try {
+      const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+      if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      const pdfJsDoc = await pdfjsLib.getDocument({
+        data: rawBytes.slice(),
+        useSystemFonts: true,
+        isEvalSupported: false,
+        useWorkerFetch: false,
+        disableAutoFetch: true,
+      }).promise;
+      for (let pageNum = 1; pageNum <= pdfJsDoc.numPages; pageNum++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfJsPage = await pdfJsDoc.getPage(pageNum) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const annotations: any[] = await pdfJsPage.getAnnotations();
+        for (const annot of annotations) {
+          if (annot.subtype === 'Widget' && annot.fieldName && annot.rect) {
+            const [x1, y1, x2, y2] = annot.rect;
+            const w = Math.abs(x2 - x1);
+            const h = Math.abs(y2 - y1);
+            if (w > 0) pdfJsFieldRects.set(annot.fieldName, { width: w, height: h });
+          }
+        }
+      }
+    } catch { /* fall through — existing fallbacks will handle it */ }
+
+    // Group FormFields by pdfFieldName to handle combined (split) fields
+    const byPdfFieldName = new Map<string, FormField[]>();
+    for (const field of fields) {
+      if (!field.pdfFieldName) continue;
+      const group = byPdfFieldName.get(field.pdfFieldName) ?? [];
+      group.push(field);
+      byPdfFieldName.set(field.pdfFieldName, group);
+    }
+
+    for (const [pdfFieldName, group] of byPdfFieldName) {
+      // Sort by splitIndex so sub-fields are in correct left-to-right order
+      const sorted = [...group].sort((a, b) => (a.splitIndex ?? 0) - (b.splitIndex ?? 0));
+
+      if (sorted.length === 1 && sorted[0].splitIndex === undefined) {
+        // Simple single field
+        const field = sorted[0];
+        const filled = filledFields.find(f => f.id === field.id);
+        if (!filled || filled.skipped || !filled.value) continue;
+        // Clamp font size: if the PDF's /DA has fontSize=0 (auto-size), it can blow up in tall fields
+        const pdfFieldFontSize = field.pdfFieldFontSize ?? 0;
+        const pdfFieldRect = field.pdfFieldRect;
+        const effectiveFontSize = pdfFieldFontSize > 0
+          ? pdfFieldFontSize
+          : Math.max(7, Math.min(10, (pdfFieldRect?.height ?? 20) * 0.55));
+        try {
+          if (field.type === 'yesno') {
+            const isYes = filled.value.toLowerCase() === 'yes' || filled.value === 'true';
+            const cb = form.getCheckBox(pdfFieldName);
+            if (isYes) cb.check(); else cb.uncheck();
+            // Auto-set the paired nein checkbox to the opposite value
+            if (field.pairedNeinPdfFieldName) {
+              try {
+                const neinCb = form.getCheckBox(field.pairedNeinPdfFieldName);
+                if (isYes) neinCb.uncheck(); else neinCb.check();
+              } catch { /* field not found */ }
+            }
+          } else if (field.type === 'select') {
+            const dropdown = form.getDropdown(pdfFieldName);
+            const opts = dropdown.getOptions();
+            const match = opts.find(o => o.toLowerCase() === filled.value.toLowerCase()) ?? opts[0];
+            if (match) dropdown.select(match);
+          } else if (field.type === 'radio') {
+            try {
+              const rg = form.getRadioGroup(pdfFieldName);
+              const opts = rg.getOptions();
+              const match = opts.find(o => o.toLowerCase() === filled.value.toLowerCase())
+                ?? opts.find(o => filled.value.toLowerCase().includes(o.toLowerCase()));
+              if (match) rg.select(match);
+            } catch { /* ignore */ }
+          } else if (field.type !== 'signature') {
+            const tf = form.getTextField(pdfFieldName);
+            tf.setText(filled.value);
+            // For auto-size fields (pdfFieldFontSize=0), setFontSize alone doesn't update the
+            // rendered appearance — the viewer ignores /DA without a regenerated /AP stream.
+            // Call updateAppearances to bake in our calculated font size.
+            const isAutoSize = (field.pdfFieldFontSize ?? 0) === 0;
+            if (isAutoSize) {
+              tf.setFontSize(effectiveFontSize);
+              try { tf.updateAppearances(helvetica); } catch { /* ignore if field uses custom font */ }
+            }
+          }
+        } catch { /* field not found or wrong type */ }
+      } else {
+        // Combined/split field — calculate padding to align each value to its visual column
+
+        // Get field dimensions — try sources in priority order:
+        // 1. PDF.js getAnnotations() — most reliable, works on any PDF structure
+        // 2. Pre-stored pdfFieldRect from analysis time
+        // 3. pdf-lib internal widget probe (often returns 0 but try anyway)
+        // 4. Page-proportional fallback (~82% of page width for full-row fields)
+        const pdfJsRect = pdfJsFieldRects.get(pdfFieldName);
+        let actualWidth = pdfJsRect?.width || sorted[0].pdfFieldRect?.width || 0;
+        let actualHeight = pdfJsRect?.height || sorted[0].pdfFieldRect?.height || 0;
+        if (actualWidth < 10) {
+          try {
+            const tfProbe = form.getTextField(pdfFieldName);
+            const probeWidgets = (tfProbe as any).acroField?.getWidgets?.() || [];
+            if (probeWidgets.length > 0) {
+              try {
+                const r = probeWidgets[0].getRectangle?.();
+                if (r?.width > 10) { actualWidth = r.width; actualHeight = r.height; }
+              } catch { /* ignore */ }
+              if (actualWidth < 10) {
+                try {
+                  const rawRect = probeWidgets[0].Rect?.();
+                  if (rawRect) {
+                    const n = [0,1,2,3].map((i: number) => rawRect.lookup(i)?.asNumber?.() ?? 0);
+                    actualWidth  = Math.abs(n[2] - n[0]);
+                    actualHeight = Math.abs(n[3] - n[1]);
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+          } catch { /* keep pre-stored values */ }
+        }
+        // Page-proportional fallback: full-row combined fields span ~82% of page width
+        if (actualWidth < 20) {
+          actualWidth  = (doc.getPages()[0]?.getWidth() ?? 595) * 0.82;
+          actualHeight = actualHeight || 18;
+        }
+        const fieldWidth = actualWidth;
+
+        const pdfFieldFontSize = sorted[0].pdfFieldFontSize ?? 0;
+        const effectiveFontSize = pdfFieldFontSize > 0
+          ? pdfFieldFontSize
+          : Math.max(7, Math.min(10, (actualHeight || 20) * 0.55));
+        // Use correct Helvetica char widths: avg ≈ 0.52em, space ≈ 0.278em
+        const avgCharWidth = effectiveFontSize * 0.52;
+        const spaceWidth = effectiveFontSize * 0.278;
+
+        let combinedValue = '';
+        for (let i = 0; i < sorted.length; i++) {
+          const field = sorted[i];
+          const filled = filledFields.find(f => f.id === field.id);
+          const value = (filled && !filled.skipped) ? (filled.value ?? '') : '';
+          combinedValue += value;
+
+          if (i < sorted.length - 1) {
+            // Calculate remaining space in this column after the value
+            const colWidthPts = fieldWidth * ((field.splitPct ?? 50) / 100);
+            const valuePts = value.length * avgCharWidth;
+            const remainingPts = Math.max(0, colWidthPts - valuePts - 2); // 2pt margin
+            const spacesNeeded = Math.max(1, Math.round(remainingPts / spaceWidth));
+            combinedValue += ' '.repeat(spacesNeeded);
+          }
+        }
+
+        try {
+          if (combinedValue.trim()) {
+            const tf = form.getTextField(pdfFieldName);
+            tf.setText(combinedValue);
+            tf.setFontSize(effectiveFontSize);
+            // CRITICAL: regenerate appearance stream so the viewer uses our exact font size.
+            // Without this, auto-size fields render at the viewer's own calculated size,
+            // making the spacing calculation wrong and columns misaligned.
+            try { tf.updateAppearances(helvetica); } catch { /* ignore if field uses custom font */ }
+          }
+        } catch { /* field not found */ }
+      }
+    }
+
+    // Handle signatures separately — typed name only (drawn sigs handled visually by user)
+    for (const sig of signatures) {
+      if (sig.mode === 'after-print' || !sig.dataUrl) continue;
+      const sigField = fields.find(f => f.id === sig.fieldId);
+      if (!sigField?.pdfFieldName) continue;
+      try {
+        form.getTextField(sigField.pdfFieldName).setText(sig.typedName ?? '');
+      } catch { /* ignore */ }
+    }
+
+    // DO NOT call form.updateFieldAppearances() — it overrides the PDF's native
+    // field typography with pdf-lib defaults (wrong font size, too large for compact fields).
+    // DO NOT call form.flatten() — the PDF viewer renders fields at the correct native
+    // size and style when fields are left interactive.
+    // Just save with the filled values; the viewer handles appearance correctly.
+    return doc.save();
+  }
+
+  // ── PATH B: Flat/scanned form — coordinate-based text overlay ──
   let doc: PDFDocument;
   let textPositions: { items: TextItem[]; pageHeights: number[]; pageWidths: number[] } | null = null;
 
   if (originalFileMime === 'application/pdf') {
     doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
-    // Extract text positions from the original PDF for label-anchored placement
     try {
       textPositions = await extractTextPositions(rawBytes);
     } catch {
@@ -150,9 +372,16 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const sigFields = fields.filter((f) => f.type === 'signature');
   const allFields = [...dataFields, ...sigFields];
 
-  const fontSize = 10;
   const page0 = pages[0];
   const ph = page0.getHeight();
+
+  // Detect the body font size of the form from its existing text (per page)
+  // This ensures filled-in text visually matches the form's own typography
+  const pageFontSizes: number[] = pages.map((_, pIdx) => {
+    if (!textPositions) return 10;
+    const pageItems = textPositions.items.filter(i => i.page === pIdx);
+    return detectBodyFontSize(pageItems);
+  });
 
   // Fallback: evenly distribute all fields in the form area (28%-82% from top)
   const formTop = ph * 0.72;    // 28% from top = 72% from bottom
@@ -161,7 +390,11 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const totalFields = allFields.length;
   const fieldSpacing = totalFields > 1 ? formHeight / totalFields : formHeight / 2;
 
-  // Place each data field value — anchored to the label's actual position in the PDF
+  // Text color: match the form's ink — use near-black (same as printed form text)
+  const TEXT_COLOR = INK;
+
+  // Place each data field value
+  // Priority: (1) Claude's position data → (2) label-anchor in PDF text → (3) even distribution
   dataFields.forEach((field, idx) => {
     const filled = filledFields.find((f) => f.id === field.id);
     if (!filled || filled.skipped || !filled.value) return;
@@ -169,34 +402,53 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
     const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];
     const pagePw = page.getWidth();
+    const pagePh = page.getHeight();
+
+    // Use the font size detected from this page's existing text
+    const fontSize = pageFontSizes[pageIdx] ?? 10;
 
     let x: number;
     let y: number;
+    let maxTextWidth: number;
 
-    // Try to find the label in the PDF text and anchor the value to it
-    const labelText = field.labelOriginal || field.label;
-    const labelItem = textPositions ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx)) : null;
+    if (field.position) {
+      // TIER 1 (best): Use Claude's estimated position for the INPUT BOX.
+      // xPct/yPct are from top-left (screen convention); pdf-lib y is from bottom.
+      const boxLeft   = (field.position.xPct    / 100) * pagePw;
+      const boxTop    = pagePh - (field.position.yPct    / 100) * pagePh;
+      const boxHeight = (field.position.heightPct / 100) * pagePh;
+      const boxWidth  = (field.position.widthPct  / 100) * pagePw;
 
-    if (labelItem) {
-      // Place value to the right of the label, on the same line
-      x = Math.max(labelItem.x + labelItem.width + 20, pagePw * 0.55);
-      y = labelItem.y;
-    } else if (field.position) {
-      // Fallback to Claude's estimated position
-      x = (field.position.xPct / 100) * pagePw;
-      y = page.getHeight() - (field.position.yPct / 100) * page.getHeight();
+      x = boxLeft + 3;
+      // Vertically centre the text baseline within the box using the actual font size
+      y = boxTop - (boxHeight / 2) - (fontSize * 0.35);
+      maxTextWidth = Math.max(boxWidth - 8, 40);
     } else {
-      // Last resort: evenly distribute in the form area
-      x = pagePw * 0.55;
-      y = formTop - (idx + 0.5) * fieldSpacing;
-    }
+      // TIER 2: Try to find the label in the PDF text and place value below/after it
+      const labelText = field.labelOriginal || field.label;
+      const labelItem = textPositions
+        ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx))
+        : null;
 
-    const maxTextWidth = pagePw - x - 20;
+      if (labelItem) {
+        // Place value one line-height below the label, aligned to its left edge
+        // Use the label's own font size so spacing is proportional
+        const labelSize = labelItem.fontSize > 0 ? labelItem.fontSize : fontSize;
+        x = labelItem.x;
+        y = labelItem.y - labelSize - 4;
+        maxTextWidth = pagePw - x - 20;
+      } else {
+        // TIER 3 (last resort): evenly distribute in the form area
+        x = pagePw * 0.55;
+        y = formTop - (idx + 0.5) * fieldSpacing;
+        maxTextWidth = pagePw * 0.4;
+      }
+    }
 
     if (field.type === 'yesno') {
       const mark = filled.value.toLowerCase() === 'yes' ? 'X' : '';
       if (mark) {
-        page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: DARK_BLUE });
+        page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: TEXT_COLOR });
       }
     } else {
       page.drawText(filled.value, {
@@ -204,13 +456,13 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
         y,
         size: fontSize,
         font,
-        color: DARK_BLUE,
+        color: TEXT_COLOR,
         maxWidth: maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4,
       });
     }
   });
 
-  // Place signatures — also anchored to label position
+  // Place signatures
   sigFields.forEach((field, idx) => {
     const sig = signatures.find((s) => s.fieldId === field.id);
     if (!sig) return;
@@ -218,23 +470,30 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
     const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];
     const pagePw = page.getWidth();
-
-    const labelText = field.labelOriginal || field.label;
-    const labelItem = textPositions ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx)) : null;
+    const pagePh = page.getHeight();
+    const fontSize = pageFontSizes[pageIdx] ?? 10;
 
     let x: number;
     let y: number;
 
-    if (labelItem) {
-      x = Math.max(labelItem.x + labelItem.width + 20, pagePw * 0.55);
-      y = labelItem.y;
-    } else if (field.position) {
-      x = (field.position.xPct / 100) * pagePw;
-      y = page.getHeight() - (field.position.yPct / 100) * page.getHeight();
+    if (field.position) {
+      const boxLeft   = (field.position.xPct    / 100) * pagePw;
+      const boxTop    = pagePh - (field.position.yPct    / 100) * pagePh;
+      const boxHeight = (field.position.heightPct / 100) * pagePh;
+      x = boxLeft + 3;
+      y = boxTop - (boxHeight / 2) - (fontSize * 0.35);
     } else {
-      x = pagePw * 0.55;
-      const sigIdx = dataFields.length + idx;
-      y = formTop - (sigIdx + 0.5) * fieldSpacing;
+      const labelText = field.labelOriginal || field.label;
+      const labelItem = textPositions ? findLabelPosition(labelText, textPositions.items.filter(i => i.page === pageIdx)) : null;
+      if (labelItem) {
+        const labelSize = labelItem.fontSize > 0 ? labelItem.fontSize : fontSize;
+        x = labelItem.x;
+        y = labelItem.y - labelSize - 4;
+      } else {
+        x = pagePw * 0.55;
+        const sigIdx = dataFields.length + idx;
+        y = formTop - (sigIdx + 0.5) * fieldSpacing;
+      }
     }
 
     if (sig.mode === 'after-print') {
@@ -249,7 +508,7 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
         } catch {
           // Fallback: draw typed name
           if (sig.typedName) {
-            page.drawText(sig.typedName, { x, y, size: 14, font, color: DARK_BLUE });
+            page.drawText(sig.typedName, { x, y, size: fontSize, font, color: INK });
           }
         }
       }

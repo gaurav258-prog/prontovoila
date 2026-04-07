@@ -172,3 +172,82 @@
   border-radius: var(--rad);
 }
 .tax-briefing-example strong { color: var(--ink2); }
+
+/* ── Tax Calendar ──────────────────────────────────────────── */
+.tax-calendar { margin-top: 28px; }
+
+.tcal-header { margin-bottom: 14px; }
+.tcal-header-de {
+  margin-left: 8px;
+  font-size: 11px; font-style: italic; font-weight: 400;
+  color: var(--ink4);
+}
+.tcal-header-sub { font-size: 12px; color: var(--ink4); margin-top: 3px; }
+
+.tcal-list { display: flex; flex-direction: column; gap: 6px; }
+
+.tcal-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--border-light);
+  border-left-width: 3px;
+  border-radius: var(--rad);
+  transition: box-shadow .15s;
+}
+.tcal-item:hover { box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+
+@media (max-width: 520px) {
+  .tcal-item {
+    grid-template-columns: 1fr;
+    border-left-width: 3px;
+  }
+  .tcal-date-col {
+    display: flex; align-items: baseline; gap: 8px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 7px; margin-bottom: 4px;
+  }
+}
+
+.tcal-date-col {
+  display: flex; flex-direction: column;
+  gap: 2px; padding-top: 2px;
+}
+.tcal-date-main  { font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+.tcal-date-approx { font-size: 11px; font-style: italic; color: var(--ink3); line-height: 1.4; }
+.tcal-days-away  { font-size: 11px; color: var(--ink4); }
+
+.tcal-content-col { display: flex; flex-direction: column; gap: 3px; }
+
+.tcal-title-row {
+  display: flex; align-items: flex-start;
+  flex-wrap: wrap; gap: 5px;
+}
+.tcal-title { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.35; }
+
+.tcal-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 1px; }
+.tcal-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: .03em; text-transform: uppercase;
+  border: 1px solid currentColor;
+  color: var(--ink3);
+}
+.tcal-badge-personal { color: var(--gold); border-color: var(--gold); }
+.tcal-badge-cat      { color: var(--ink4); border-color: var(--border-light); }
+
+.tcal-de   { font-size: 11px; color: var(--ink4); font-style: italic; }
+.tcal-desc { font-size: 12px; color: var(--ink3); line-height: 1.55; }
+.tcal-link {
+  display: inline-block; margin-top: 5px;
+  font-size: 11px; color: var(--gold); font-weight: 500; text-decoration: none;
+}
+.tcal-link:hover { text-decoration: underline; }
+
+.tcal-footer {
+  margin-top: 10px;
+  font-size: 11px; color: var(--ink4); font-style: italic; line-height: 1.5;
+}

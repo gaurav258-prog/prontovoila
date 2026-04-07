@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   if (isLoggedIn) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const clearMessages = () => { setError(''); setSuccess(''); };
@@ -66,7 +66,7 @@ export default function LoginPage() {
         setSuccess('Account created! Please check your email to verify your address.');
         setMode('signin');
       } else {
-        navigate('/app');
+        navigate('/dashboard');
       }
     } else {
       setError(result.error || 'Signup failed.');
@@ -86,7 +86,7 @@ export default function LoginPage() {
     setSubmitting(false);
 
     if (result.success) {
-      navigate('/app');
+      navigate('/dashboard');
     } else {
       setError(result.error || 'Login failed.');
     }

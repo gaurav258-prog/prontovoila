@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ArchIcon from '../components/ArchIcon';
 import '../styles/landing.css';
@@ -64,8 +63,8 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [ctaEmail, setCtaEmail] = useState('');
   const [pricingTab, setPricingTab] = useState<'forms' | 'tax'>('forms');
+  const [howTab, setHowTab] = useState<'forms' | 'tax'>('forms');
 
   // Scroll listener for nav
   useEffect(() => {
@@ -169,11 +168,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  const handleCtaSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    navigate('/app');
-  };
-
   return (
     <>
       {/* NAV */}
@@ -216,10 +210,10 @@ export default function LandingPage() {
               <span>Trusted by expats in 50+ countries</span>
             </div>
             <h1>
-              Life abroad,<strong>made simple.</strong>
+              Official life abroad.<strong>In your language.</strong>
             </h1>
             <p className="hero-sub">
-              Bureaucracy in a foreign language shouldn&rsquo;t hold you back. ProntoVoil&agrave; helps expats, immigrants and international workers navigate official paperwork, tax filings and government processes &mdash; in any language.
+              Fill any government form in any language. File your German income tax &mdash; guided step by step in yours. ProntoVoil&agrave; handles the bureaucracy so you can focus on living.
             </p>
             <div className="hero-btns">
               <a href="#services" className="btn-gold">Explore services &darr;</a>
@@ -227,11 +221,11 @@ export default function LandingPage() {
             <div className="trust-row">
               <div className="tstat"><div className="tstat-n">50+</div><div className="tstat-l">Languages</div></div>
               <div className="tdiv" />
-              <div className="tstat"><div className="tstat-n">120+</div><div className="tstat-l">Countries</div></div>
+              <div className="tstat"><div className="tstat-n">🇩🇪</div><div className="tstat-l">Germany Tax Filing</div></div>
               <div className="tdiv" />
-              <div className="tstat"><div className="tstat-n">98%</div><div className="tstat-l">Accuracy</div></div>
+              <div className="tstat"><div className="tstat-n">5 min</div><div className="tstat-l">Avg. fill time</div></div>
               <div className="tdiv" />
-              <div className="tstat"><div className="tstat-n">4.9&#9733;</div><div className="tstat-l">User rating</div></div>
+              <div className="tstat"><div className="tstat-n">Free</div><div className="tstat-l">To start</div></div>
             </div>
           </div>
           <div className="hero-right">
@@ -242,35 +236,28 @@ export default function LandingPage() {
               <div className="fbar done w7" />
               <div className="fbar done" />
               <div className="fbar done w5" />
-              <div className="fbadge">&#10003; Filled in 2 min</div>
+              <div className="fbadge">&#10003; Filled in Turkish · 2 min</div>
             </div>
-            <div className="fcard fcard-2">
-              <div className="fcard-flag">{'\u{1F1EF}\u{1F1F5}'}</div>
-              <div className="fcard-title">{'\u5165\u9662\u7533\u8FBC\u66F8'} &mdash; Tokyo</div>
-              <div className="fbar done" />
-              <div className="fbar done w9" />
-              <div className="fbar w7" />
-              <div className="fbadge">&#10003; Answered in Hindi</div>
-            </div>
-            <div className="fcard fcard-3">
-              <div className="fcard-flag">{'\u{1F1EB}\u{1F1F7}'}</div>
-              <div className="fcard-title">D&eacute;claration de revenus</div>
-              <div className="fbar done w9" />
-              <div className="fbar done" />
-              <div className="fbar done w7" />
-              <div className="fbadge">&#10003; Answered in Arabic</div>
+            <div className="fcard fcard-2" style={{ width: 270 }}>
+              <div className="fcard-flag" style={{ fontSize: 14, color: 'rgba(255,255,255,.5)', marginBottom: '.3rem' }}>EINKOMMENSTEUER&shy;ERKL&Auml;RUNG 2024</div>
+              <div className="fcard-title" style={{ fontSize: 12, color: 'rgba(255,255,255,.75)', marginBottom: '.7rem' }}>Estimated refund (Erstattung)</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--gold)', marginBottom: '.5rem' }}>&euro;1,840</div>
+              <div className="fbar done w9" style={{ marginBottom: 3 }} />
+              <div className="fbar done w7" style={{ marginBottom: 3 }} />
+              <div className="fbar done" style={{ marginBottom: 3 }} />
+              <div className="fbadge" style={{ marginTop: '.6rem' }}>&#10003; Guided in Hindi</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* STAT BAND */}
+      {/* CAPABILITY BAND */}
       <div className="stat-band">
         <div className="stat-row">
-          <div><div className="sn">2.4M+</div><div className="sl">Forms filled</div></div>
-          <div><div className="sn">50+</div><div className="sl">Languages</div></div>
-          <div><div className="sn">180+</div><div className="sl">Form types</div></div>
-          <div><div className="sn">3 min</div><div className="sl">Average time</div></div>
+          <div><div className="sn">50+</div><div className="sl">Languages supported</div></div>
+          <div><div className="sn">Any form</div><div className="sl">PDF, photo, Word</div></div>
+          <div><div className="sn">🇩🇪 Tax</div><div className="sl">German Einkommensteuer</div></div>
+          <div><div className="sn">Free</div><div className="sl">To start, no card needed</div></div>
         </div>
       </div>
 
@@ -284,7 +271,7 @@ export default function LandingPage() {
             <div className="svc-card svc-active">
               <div className="svc-badge">Available now</div>
               <div className="svc-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 13l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><path d="M9 13l2 2 4-4" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
               </div>
               <h3>Form Translation &amp; Filling</h3>
               <p>Upload any official form in any language. Answer questions naturally in yours. ProntoVoil&agrave; reads every field, translates intelligently, and fills the original document with precision.</p>
@@ -300,21 +287,21 @@ export default function LandingPage() {
               </button>
             </div>
             <div className="svc-card svc-active">
-              <div className="svc-badge">Germany</div>
+              <div className="svc-badge">Germany · Available now</div>
               <div className="svc-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 9h20M8 3v6M16 3v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 14h2M8 17h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1"/><path d="M2 9h20M8 3v6M16 3v6" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/><path d="M8 14h2M8 17h4" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/></svg>
               </div>
-              <h3>Resident Country Tax Filing</h3>
-              <p>File your tax return in the country you live in &mdash; guided step by step in your language. No more struggling with foreign tax forms or missing deadlines.</p>
+              <h3>German Tax Filing <span style={{ fontWeight: 400, fontSize: '13px', color: 'var(--ink4)' }}>(Einkommensteuererkl&auml;rung)</span></h3>
+              <p>File your annual German income tax return &mdash; guided step by step in your language. Deterministic refund calculation using official §32a EStG formulas. No German required.</p>
               <ul className="svc-list">
-                <li>Annual tax return preparation</li>
-                <li>Local deductions &amp; credits guidance</li>
-                <li>Deadline tracking &amp; reminders</li>
-                <li>Plain-language explanations</li>
-                <li>Multi-country support</li>
+                <li>Guided in your language (50+)</li>
+                <li>Deductions: commute, home office, equipment, insurance</li>
+                <li>Official §32a EStG refund calculation</li>
+                <li>ELSTER direct submission (Complete plan)</li>
+                <li>Freehand briefing &mdash; describe your situation, we pre-fill</li>
               </ul>
               <button className="btn-gold" onClick={() => { setPricingTab('tax'); document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ marginTop: 'auto' }}>
-                See pricing &amp; get started &rarr;
+                See pricing &amp; file now &rarr;
               </button>
             </div>
           </div>
@@ -325,38 +312,38 @@ export default function LandingPage() {
       <section className="sl-section" id="problem">
         <div className="cont">
           <span className="sec-ey rv">The challenge</span>
-          <h2 className="sec-h rv rv1">Official forms shouldn&rsquo;t be<br/>a language barrier</h2>
+          <h2 className="sec-h rv rv1">Two problems every expat faces</h2>
           <p className="sec-p rv rv2">
-            Whether registering at a local council, seeing a doctor, filing taxes, or enrolling a child in school &mdash; navigating official paperwork in an unfamiliar language is stressful, time-consuming, and costly when done wrong.
+            Foreign paperwork and foreign taxes &mdash; both come at you at once. Both are stressful in an unfamiliar language. ProntoVoil&agrave; solves both.
           </p>
           <div className="prob-grid rv rv3">
             <div className="pcard">
-              <div className="picon" style={{ background: '#fff0e8' }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L3 18h16L11 2z" stroke="#c0622a" strokeWidth="1.5" strokeLinejoin="round"/><path d="M11 9v4M11 14v.5" stroke="#c0622a" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <div className="picon" style={{ background: 'var(--cream)' }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M14 2H6a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6l-4-4z" stroke="var(--navy)" strokeWidth="1" strokeLinejoin="miter"/><path d="M14 2v4h4M8 11h6M8 14h4" stroke="var(--navy)" strokeWidth="1" strokeLinecap="square"/></svg>
               </div>
-              <h3>Government registration</h3>
-              <p>Anmeldung, residenza, inscription &mdash; critical forms for life in a new country, written entirely in the local language.</p>
+              <h3>Forms in a foreign language</h3>
+              <p>Anmeldung, patient intake, school enrolment &mdash; critical documents written entirely in a language you may not speak fluently.</p>
             </div>
             <div className="pcard">
-              <div className="picon" style={{ background: '#e8efff' }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3a8 8 0 100 16A8 8 0 0011 3z" stroke="#3060c0" strokeWidth="1.5"/><path d="M11 8v4l3 3" stroke="#3060c0" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <div className="picon" style={{ background: 'var(--cream)' }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3a8 8 0 100 16A8 8 0 0011 3z" stroke="var(--navy)" strokeWidth="1"/><path d="M11 8v4l3 3" stroke="var(--navy)" strokeWidth="1" strokeLinecap="square"/></svg>
               </div>
-              <h3>Medical &amp; hospital forms</h3>
-              <p>Patient intake, consent forms, medical history. Accurate completion affects the care you receive.</p>
+              <h3>Wrong fields, wrong answers</h3>
+              <p>Translation tools give words, not context. A mistranslated field on a visa or medical form can have serious consequences.</p>
             </div>
             <div className="pcard">
-              <div className="picon" style={{ background: '#f5f0e8' }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="5" width="14" height="12" rx="2" stroke="#8a6a20" strokeWidth="1.5"/><path d="M8 10h6M8 13h4" stroke="#8a6a20" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <div className="picon" style={{ background: 'var(--cream)' }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="5" width="14" height="12" stroke="var(--navy)" strokeWidth="1"/><path d="M8 9h6M8 12h4M13 12l2 2" stroke="var(--navy)" strokeWidth="1" strokeLinecap="square"/></svg>
               </div>
-              <h3>Tax &amp; financial declarations</h3>
-              <p>Annual filings, bank account opening, insurance. Errors are expensive to fix.</p>
+              <h3>German tax return complexity</h3>
+              <p>Einkommensteuererklärung involves dozens of fields, deduction rules, and official thresholds &mdash; all in German, with real money at stake.</p>
             </div>
             <div className="pcard">
-              <div className="picon" style={{ background: '#e8f5ee' }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3L4 8v11h5v-5h4v5h5V8L11 3z" stroke="#2a6a40" strokeWidth="1.5" strokeLinejoin="round"/></svg>
+              <div className="picon" style={{ background: 'var(--cream)' }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3L4 8v11h5v-5h4v5h5V8L11 3z" stroke="var(--navy)" strokeWidth="1" strokeLinejoin="miter"/></svg>
               </div>
-              <h3>School &amp; childcare</h3>
-              <p>Enrolment forms, permission slips, medical declarations for children in a new country.</p>
+              <h3>Missing refunds &amp; deadlines</h3>
+              <p>The average expat in Germany is owed a refund but never claims it. Missing the July 31 deadline costs even more.</p>
             </div>
           </div>
         </div>
@@ -365,106 +352,104 @@ export default function LandingPage() {
       {/* HOW IT WORKS */}
       <section className="sc-section" id="how">
         <div className="cont">
-          <span className="sec-ey rv">How ProntoVoil&agrave; works</span>
-          <h2 className="sec-h rv rv1">Three steps to any filled form</h2>
-          <p className="sec-p rv rv2">No translation tools. No dictionaries. Upload, answer in your language, receive a completed form.</p>
-          <div className="steps rv rv3">
-            <div className="step">
-              <div className="step-num">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="18" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 15 12 12 15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Upload your form</h3>
-              <p>PDF, photograph, or Word document. ProntoVoil&agrave; reads every field automatically, regardless of language.</p>
-            </div>
-            <div className="step">
-              <div className="step-num">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Answer in your language</h3>
-              <p>Type naturally. ProntoVoil&agrave; extracts the relevant information and asks only for what it cannot find.</p>
-            </div>
-            <div className="step">
-              <div className="step-num">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Review and confirm</h3>
-              <p>Every field shown clearly with its translated value. Edit anything before downloading.</p>
-            </div>
-            <div className="step">
-              <div className="step-num">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Download and submit</h3>
-              <p>PDF, Word or data export. Correct fields, correct language, ready to sign.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+          <span className="sec-ey rv">How it works</span>
+          <h2 className="sec-h rv rv1">Simple steps. Real results.</h2>
+          <p className="sec-p rv rv2">Two services, both designed to be completed in minutes &mdash; in any language.</p>
 
-      {/* USE CASES */}
-      <section className="sl-section" id="usecases">
-        <div className="cont">
-          <span className="sec-ey rv">Where ProntoVoil&agrave; helps</span>
-          <h2 className="sec-h rv rv1">Every form type.<br/>Every country.</h2>
-          <p className="sec-p rv rv2">From a GP registration in London to a tax declaration in Tokyo.</p>
-          <div className="uc-grid rv rv3">
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="22" x2="21" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="11" width="20" height="11" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polygon points="12 2 2 11 22 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Government &amp; immigration</h3>
-              <p>Residence registration, visas, work permits, identity documents.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Healthcare</h3>
-              <p>Patient registration, medical history, consent forms, insurance claims.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 12v5c3 3 9 3 12 0v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Education</h3>
-              <p>School and university enrolment, scholarships, childcare registration.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Tax &amp; finance</h3>
-              <p>Tax returns, bank account opening, mortgage applications.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="3" width="15" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="5.5" cy="18.5" r="2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="18.5" cy="18.5" r="2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Transport &amp; utilities</h3>
-              <p>Vehicle registration, driving licence exchange, utility connections.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="12" x2="12" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Employment</h3>
-              <p>Onboarding forms, HR documents, social security registration.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Housing</h3>
-              <p>Rental applications, purchase contracts, tenancy agreements.</p>
-            </div>
-            <div className="uccard">
-              <div className="uc-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22V12M3 5h18M12 2l3 3-3 3-3-3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 5l4 8H0L4 5zM20 5l4 8h-8l4-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              <h3>Legal &amp; notarial</h3>
-              <p>Powers of attorney, declarations, court forms.</p>
+          {/* Tab toggle */}
+          <div className="rv rv2" style={{ display: 'flex', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'inline-flex', background: 'var(--border-light)', borderRadius: 40, padding: 3, gap: 3 }}>
+              <button
+                onClick={() => setHowTab('forms')}
+                style={{
+                  padding: '7px 20px', borderRadius: 36, border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, transition: 'all .2s',
+                  background: howTab === 'forms' ? 'var(--navy)' : 'transparent',
+                  color: howTab === 'forms' ? '#fff' : 'var(--ink3)',
+                }}
+              >Form Translation</button>
+              <button
+                onClick={() => setHowTab('tax')}
+                style={{
+                  padding: '7px 20px', borderRadius: 36, border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, transition: 'all .2s',
+                  background: howTab === 'tax' ? 'var(--navy)' : 'transparent',
+                  color: howTab === 'tax' ? '#fff' : 'var(--ink3)',
+                }}
+              >German Tax Filing</button>
             </div>
           </div>
+
+          {howTab === 'forms' ? (
+            <div className="steps rv rv3">
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><line x1="12" y1="18" x2="12" y2="12" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><polyline points="9 15 12 12 15 15" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Upload your form</h3>
+                <p>PDF, photograph, or Word document. ProntoVoil&agrave; reads every field automatically, regardless of language.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Answer in your language</h3>
+                <p>Type naturally. ProntoVoil&agrave; extracts the relevant information and asks only for what it cannot find.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Review and confirm</h3>
+                <p>Every field shown clearly with its translated value. Edit anything before downloading.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Download and submit</h3>
+                <p>PDF, Word or data export. Correct fields, correct language, ready to sign.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="steps rv rv3" style={{ gridTemplateColumns: 'repeat(5,1fr)' }}>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1"/><path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/></svg>
+                </div>
+                <h3>Pick your language</h3>
+                <p>Choose any of 50+ languages. The entire questionnaire will be shown in yours.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Describe your situation</h3>
+                <p>Write freely about your job, salary, commute, insurance. We extract the tax data automatically.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1"/><path d="M8 12h8M8 8h5M8 16h3" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/></svg>
+                </div>
+                <h3>Confirm your details</h3>
+                <p>Review pre-filled income, deductions and insurance. Edit any field before we calculate.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="1" strokeLinecap="square"/><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" strokeWidth="1" strokeLinecap="square" opacity=".3"/></svg>
+                </div>
+                <h3>See your refund</h3>
+                <p>Exact §32a EStG calculation &mdash; Einkommensteuer, Soli, Kirchensteuer. No AI estimation for numbers.</p>
+              </div>
+              <div className="step">
+                <div className="step-num">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter"/></svg>
+                </div>
+                <h3>Submit via ELSTER</h3>
+                <p>Complete plan: file directly to Finanzamt via ELSTER. Standard: download your summary PDF.</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -472,16 +457,18 @@ export default function LandingPage() {
       <section className="sn-section" id="languages">
         <div className="cont">
           <span className="sec-ey rv">Language coverage</span>
-          <h2 className="sec-h rv rv1">Your language. Any form&rsquo;s language.</h2>
-          <p className="sec-p rv rv2">Every combination works. Answer in Hindi, fill a German form. Respond in Arabic, complete a Japanese document.</p>
+          <h2 className="sec-h rv rv1">Any language. Both services.</h2>
+          <p className="sec-p rv rv2">Fill forms or file your German taxes &mdash; in any of 50+ languages. Answer in Hindi, fill a German Anmeldung. File your Einkommensteuererkl&auml;rung guided in Turkish.</p>
           <div className="lang-split rv rv3">
             <div className="lang-pairs">
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1EE}\u{1F1F3}'}</span>Hindi</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1E9}\u{1F1EA}'}</span>German form</span></div>
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1F8}\u{1F1E6}'}</span>Arabic</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EB}\u{1F1F7}'}</span>French form</span></div>
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1E7}\u{1F1F7}'}</span>Portuguese</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EF}\u{1F1F5}'}</span>Japanese form</span></div>
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1E8}\u{1F1F3}'}</span>Chinese</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EC}\u{1F1E7}'}</span>English form</span></div>
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1FA}\u{1F1E6}'}</span>Ukrainian</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1F5}\u{1F1F1}'}</span>Polish form</span></div>
-              <div className="lpair"><span className="lp-from"><span>{'\u{1F1F0}\u{1F1F7}'}</span>Korean</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EE}\u{1F1F9}'}</span>Italian form</span></div>
+              <div style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,.3)', letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '.5rem' }}>Form Translation</div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1EE}\u{1F1F3}'}</span>Hindi</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1E9}\u{1F1EA}'}</span>German Anmeldung</span></div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1F8}\u{1F1E6}'}</span>Arabic</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EB}\u{1F1F7}'}</span>French medical form</span></div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1E7}\u{1F1F7}'}</span>Portuguese</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1EF}\u{1F1F5}'}</span>Japanese intake form</span></div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1FA}\u{1F1E6}'}</span>Ukrainian</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1F5}\u{1F1F1}'}</span>Polish school form</span></div>
+              <div style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,.3)', letterSpacing: '.1em', textTransform: 'uppercase' as const, margin: '1rem 0 .5rem' }}>German Tax Filing</div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1F9}\u{1F1F7}'}</span>Turkish</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1E9}\u{1F1EA}'}</span>Einkommensteuererklärung</span></div>
+              <div className="lpair"><span className="lp-from"><span>{'\u{1F1E8}\u{1F1F3}'}</span>Chinese</span><span className="lp-arr">&rarr;</span><span className="lp-to"><span>{'\u{1F1E9}\u{1F1EA}'}</span>Einkommensteuererklärung</span></div>
             </div>
             <div>
               <p style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', letterSpacing: '.1em', textTransform: 'uppercase' as const, fontWeight: 600, marginBottom: '.85rem' }}>All supported languages</p>
@@ -505,7 +492,7 @@ export default function LandingPage() {
       <section className="sc-section" id="testimonials">
         <div className="cont">
           <span className="sec-ey rv">What people say</span>
-          <h2 className="sec-h rv rv1">Real forms. Real people.<br/>Real relief.</h2>
+          <h2 className="sec-h rv rv1">Real paperwork.<br/>Real relief.</h2>
           <div className="tgrid rv rv2">
             <div className="tcard">
               <FiveStars />
@@ -540,6 +527,18 @@ export default function LandingPage() {
                   <div className="tname">Ahmed K.</div>
                   <div className="tloc">{'\u{1F1F8}\u{1F1E6}'} Riyadh &rarr; {'\u{1F1EB}\u{1F1F7}'} Paris</div>
                   <div className="tform">Dossier inscription scolaire</div>
+                </div>
+              </div>
+            </div>
+            <div className="tcard">
+              <FiveStars />
+              <p className="tq">&ldquo;I had no idea I was owed a refund. I described my situation in Turkish, ProntoVoil&agrave; pre-filled the whole Einkommensteuererklärung and showed me &euro;1,840 back. The German tax system finally makes sense to me.&rdquo;</p>
+              <div className="tauth">
+                <div className="tav" style={{ background: '#e8f5ee', color: '#2a6a40' }}>EY</div>
+                <div>
+                  <div className="tname">Emine Y.</div>
+                  <div className="tloc">{'\u{1F1F9}\u{1F1F7}'} Istanbul &rarr; {'\u{1F1E9}\u{1F1EA}'} Munich</div>
+                  <div className="tform">Einkommensteuererklärung 2024 &mdash; €1,840 refund</div>
                 </div>
               </div>
             </div>
@@ -592,6 +591,7 @@ export default function LandingPage() {
                   <li className="pno">API access</li>
                 </ul>
                 <button className="btn-pghost" onClick={() => navigate('/app')}>Get started free</button>
+                <p style={{ fontSize: 11, color: 'var(--ink4)', textAlign: 'center', marginTop: '.65rem', marginBottom: 0 }}>No credit card · No account required</p>
               </div>
               <div className="price-c feat">
                 <div className="plabel">Pro</div>
@@ -604,6 +604,7 @@ export default function LandingPage() {
                   <li className="pok">Full form history &amp; re-download</li>
                 </ul>
                 <button className="btn-pgold" onClick={() => navigate('/app')}>Start Pro &mdash; 14 days free</button>
+                <p style={{ fontSize: 11, color: 'var(--ink4)', textAlign: 'center', marginTop: '.65rem', marginBottom: 0 }}>Cancel anytime · Your documents are never stored</p>
               </div>
               <div className="price-c">
                 <div className="plabel">Enterprise</div>
@@ -633,6 +634,7 @@ export default function LandingPage() {
                   <li className="pno">ELSTER submission</li>
                 </ul>
                 <button className="btn-pghost" onClick={() => navigate('/tax')}>Get started free</button>
+                <p style={{ fontSize: 11, color: 'var(--ink4)', textAlign: 'center', marginTop: '.65rem', marginBottom: 0 }}>No card · Tax data stays in your browser</p>
               </div>
               <div className="price-c">
                 <div className="plabel">Standard</div>
@@ -647,6 +649,7 @@ export default function LandingPage() {
                   <li className="pno">ELSTER direct submission</li>
                 </ul>
                 <button className="btn-pghost" onClick={() => navigate('/tax')}>Start Standard &rarr;</button>
+                <p style={{ fontSize: 11, color: 'var(--ink4)', textAlign: 'center', marginTop: '.65rem', marginBottom: 0 }}>One-time per year · No recurring charge</p>
               </div>
               <div className="price-c feat">
                 <div className="plabel">Complete</div>
@@ -661,27 +664,47 @@ export default function LandingPage() {
                   <li className="pok">Priority support</li>
                 </ul>
                 <button className="btn-pgold" onClick={() => navigate('/tax')}>File with ELSTER &rarr;</button>
+                <p style={{ fontSize: 11, color: 'var(--ink4)', textAlign: 'center', marginTop: '.65rem', marginBottom: 0 }}>ELSTER submission on your explicit instruction</p>
               </div>
             </div>
           )}
+
+          {/* Shared trust strip */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-light)' }}>
+            {[
+              ['🔒', 'Data encrypted in transit'],
+              ['🗑️', 'Documents deleted after processing'],
+              ['🚫', 'We never sell your data'],
+              ['🇪🇺', 'Servers in the EU'],
+            ].map(([icon, label]) => (
+              <div key={label as string} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 14 }}>{icon}</span>
+                <span style={{ fontSize: 12, color: 'var(--ink3)', fontWeight: 500 }}>{label as string}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: 'center', marginTop: '.85rem', marginBottom: 0 }}>
+            <a href="/security" style={{ fontSize: 12, color: 'var(--ink4)', textDecoration: 'underline' }}>How we protect your data →</a>
+          </p>
         </div>
       </section>
 
       {/* CTA */}
       <section className="sc-section" id="cta">
         <div className="cont">
-          <div className="cta-box rv">
-            <h2>Start filling any form today</h2>
-            <p>Free to try. No credit card. Works on every device in every language.</p>
-            <form className="email-row" onSubmit={handleCtaSubmit}>
-              <input
-                type="email"
-                placeholder="Your email address"
-                value={ctaEmail}
-                onChange={(e) => setCtaEmail(e.target.value)}
-              />
-              <button type="submit" className="btn-gold">Get early access &rarr;</button>
-            </form>
+          <div className="rv" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 860, margin: '0 auto' }}>
+            <div className="cta-box" style={{ textAlign: 'left', padding: '3rem 2.5rem' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '.75rem' }}>Form Translation</div>
+              <h2 style={{ fontSize: 'clamp(22px,2.5vw,32px)', marginBottom: '.6rem' }}>Fill any form today</h2>
+              <p style={{ fontSize: '15px', marginBottom: '1.75rem' }}>Upload, answer in your language, receive a completed PDF. Free to try &mdash; no card needed.</p>
+              <button className="btn-gold" onClick={() => navigate('/app')}>Upload a form &rarr;</button>
+            </div>
+            <div className="cta-box" style={{ textAlign: 'left', padding: '3rem 2.5rem', background: 'var(--navy)', border: '1px solid rgba(201,168,76,.25)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '.75rem' }}>German Tax Filing</div>
+              <h2 style={{ fontSize: 'clamp(22px,2.5vw,32px)', marginBottom: '.6rem' }}>File your taxes now</h2>
+              <p style={{ fontSize: '15px', marginBottom: '1.75rem' }}>Guided Einkommensteuererklärung in your language. Accurate §32a refund calculation. Free to start.</p>
+              <button className="btn-gold" onClick={() => navigate('/tax')}>File your taxes &rarr;</button>
+            </div>
           </div>
         </div>
       </section>
@@ -691,30 +714,31 @@ export default function LandingPage() {
         <div className="foot-inner">
           <div className="foot-brand">
             <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ArchIcon size={26} light /><span>Pronto<em>Voil&agrave;</em></span></div>
-            <p>Life abroad, made simple. Helping expats navigate official paperwork, tax filings and government processes in any language.</p>
+            <p>Official life abroad. In your language. Form translation and German tax filing for expats worldwide.</p>
           </div>
           <div className="fcol">
             <h4>Product</h4>
-            <a href="#">How it works</a>
-            <a href="#">Languages</a>
-            <a href="#">Use cases</a>
-            <a href="#">Pricing</a>
-            <a href="#">API</a>
+            <a href="#services">Form Translation</a>
+            <a href="#services" onClick={(e) => { e.preventDefault(); navigate('/tax'); }}>German Tax Filing</a>
+            <a href="#languages">Languages</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#how">How it works</a>
           </div>
           <div className="fcol">
             <h4>Company</h4>
-            <a href="#">About</a>
-            <a href="#">Blog</a>
-            <a href="#">Press</a>
-            <a href="#">Careers</a>
-            <a href="#">Contact</a>
+            <a href="/about">About</a>
+            <a href="/blog">Blog</a>
+            <a href="/press">Press</a>
+            <a href="/careers">Careers</a>
+            <a href="/contact">Contact</a>
           </div>
           <div className="fcol">
             <h4>Legal</h4>
-            <a href="#">Privacy policy</a>
-            <a href="#">Terms of service</a>
-            <a href="#">Cookie policy</a>
-            <a href="#">GDPR</a>
+            <a href="/privacy">Privacy policy</a>
+            <a href="/terms">Terms of service</a>
+            <a href="/cookies">Cookie policy</a>
+            <a href="/gdpr">GDPR</a>
+            <a href="/security">Security</a>
           </div>
         </div>
         <div className="foot-bottom">

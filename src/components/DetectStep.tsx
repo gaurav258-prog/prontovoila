@@ -6,21 +6,27 @@ import { simulateFormAnalysis, DEMO_FIELDS } from '../data/demoData';
 
 export default function DetectStep() {
   const {
-    setStep, setLanguage, setFormAnalysis, setFormMeta, setFields,
-    langCode, formAnalysis, fileB64, fileMime, testMode,
+    setStep, setLanguage, setFormAnalysis, setFormMeta, setFields, setHasAcroFields,
+    langCode, formAnalysis, fileB64, fileMime, testMode, reset,
   } = useAppStore();
 
   const [analyzing, setAnalyzing] = useState(!formAnalysis);
   const [error, setError] = useState('');
   const [customLang, setCustomLang] = useState('');
   const initRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Cancel the in-flight API call and go back to step 1
+  const handleCancel = () => {
+    abortRef.current?.abort();
+    reset();
+  };
 
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
     if (!formAnalysis) {
       if (testMode) {
-        // Test mode: use demo data, no API call
         simulateFormAnalysis().then((analysis) => {
           setFormAnalysis(analysis);
           setFormMeta({
@@ -32,9 +38,10 @@ export default function DetectStep() {
           setAnalyzing(false);
         });
       } else if (fileB64 && fileMime) {
-        // Live mode: call Claude API
-        analyzeForm(fileB64, fileMime)
-          .then(({ analysis, fields }) => {
+        const controller = new AbortController();
+        abortRef.current = controller;
+        analyzeForm(fileB64, fileMime, controller.signal)
+          .then(({ analysis, fields, hasAcroFields }) => {
             setFormAnalysis(analysis);
             setFormMeta({
               title: analysis.formTitleTranslated,
@@ -42,15 +49,20 @@ export default function DetectStep() {
               totalFields: analysis.mandatoryFields.length + analysis.optionalFields.length,
             });
             setFields(fields);
+            setHasAcroFields(hasAcroFields);
             setAnalyzing(false);
           })
           .catch((err) => {
+            // Ignore abort errors — user intentionally cancelled
+            if (err.name === 'AbortError') return;
             console.error('Form analysis failed:', err);
             setError(err.message || 'Failed to analyze form. Please try again.');
             setAnalyzing(false);
           });
       }
     }
+    // Cleanup: abort if component unmounts mid-analysis
+    return () => { abortRef.current?.abort(); };
   }, []);
 
   if (analyzing) {
@@ -61,6 +73,17 @@ export default function DetectStep() {
           <div className="spin-lbl">{testMode ? 'Loading test data...' : 'Analyzing your form...'}</div>
           <div className="spin-sub">{testMode ? 'Using demo mode (no API calls)' : 'Reading fields, detecting language and structure'}</div>
         </div>
+        {!testMode && (
+          <div style={{ textAlign: 'center', marginTop: 20 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ fontSize: 12, color: 'var(--ink4)' }}
+              onClick={handleCancel}
+            >
+              Cancel and start over
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -71,9 +94,18 @@ export default function DetectStep() {
         <div className="card-title">Analysis failed</div>
         <div className="alert alert-err" style={{ marginTop: 12 }}>{error}</div>
         <div className="btn-row">
-          <button className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
+          <button className="btn btn-ghost" onClick={() => setStep(1)}>← Back</button>
           <button className="btn btn-primary" onClick={() => { setError(''); setAnalyzing(true); initRef.current = false; }}>
-            Retry
+            Try again
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button
+            className="btn btn-ghost"
+            style={{ fontSize: 12, color: 'var(--ink4)' }}
+            onClick={handleCancel}
+          >
+            Start over with a different form
           </button>
         </div>
       </div>

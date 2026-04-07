@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTaxStore } from '../../store/taxStore';
 import { analyzeTaxSituation } from '../../services/taxAnalysis';
+import TaxCalendar from './TaxCalendar';
 
 export default function TaxSummaryStep() {
   const {
@@ -117,6 +118,8 @@ export default function TaxSummaryStep() {
           </ol>
         </div>
       )}
+
+      <TaxCalendar />
 
       <div style={{ marginTop: 24, padding: '12px 16px', background: 'var(--cream2)', borderRadius: 'var(--rad)', fontSize: 12, color: 'var(--ink3)' }}>
         This is an estimate based on the information you provided. Actual results may vary. For official filing, use ELSTER (elster.de) or consult a Steuerberater (tax advisor).

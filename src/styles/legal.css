@@ -1,0 +1,15 @@
+.legal h2 { font-size: clamp(18px,2vw,22px); font-weight: 700; color: var(--navy); margin: 2.5rem 0 .7rem; letter-spacing: -.01em; }
+.legal h3 { font-size: 16px; font-weight: 600; color: var(--ink); margin: 1.5rem 0 .4rem; }
+.legal p { font-size: 15px; color: var(--ink2); line-height: 1.8; margin-bottom: 1rem; }
+.legal ul, .legal ol { margin: .5rem 0 1rem 1.4rem; }
+.legal li { font-size: 15px; color: var(--ink2); line-height: 1.75; margin-bottom: .3rem; }
+.legal strong { color: var(--ink); }
+.legal a { color: var(--navy); }
+.legal .disclaimer-box { background: #fff8e8; border: 1px solid rgba(201,168,76,.35); border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+.legal .disclaimer-box p { margin: 0; font-size: 14px; color: var(--ink2); }
+.legal .disclaimer-box strong { color: #8a6a00; }
+.legal .section-divider { border: none; border-top: 1px solid var(--border-light); margin: 2rem 0; }
+.legal .toc { background: var(--cream); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+.legal .toc p { margin: 0 0 .5rem; font-size: 13px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: .08em; }
+.legal .toc a { display: block; font-size: 14px; color: var(--navy); text-decoration: none; margin-bottom: .2rem; }
+.legal .toc a:hover { text-decoration: underline; }

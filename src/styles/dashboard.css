@@ -1,0 +1,286 @@
+/* ── Shell & Nav ──────────────────────────────────────────────── */
+.db-shell { min-height: 100vh; background: var(--cream); }
+
+.db-header {
+  background: var(--navy); height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; position: sticky; top: 0; z-index: 50;
+}
+.db-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.db-wordmark { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+.db-wordmark em { font-style: normal; color: var(--gold); }
+.db-header-right { display: flex; align-items: center; gap: 14px; }
+.db-user-email { font-size: 12px; color: rgba(255,255,255,.45); }
+.db-signout-btn {
+  font-size: 11px; color: rgba(255,255,255,.45); background: none; border: none;
+  cursor: pointer; font-family: var(--sans); text-decoration: underline; padding: 0;
+}
+.db-signout-btn:hover { color: rgba(255,255,255,.75); }
+
+/* ── Content wrapper ───────────────────────────────────────────── */
+.db-content { max-width: 960px; margin: 0 auto; padding: 0 20px 48px; box-sizing: border-box; }
+
+/* ── Welcome bar ───────────────────────────────────────────────── */
+.db-welcome-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0 20px; gap: 16px;
+}
+.db-welcome-text { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: -.02em; }
+.db-welcome-sub { font-size: 13px; color: var(--ink4); margin-top: 2px; }
+
+.db-plan-badge {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  padding: 8px 14px; background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--rad); flex-shrink: 0;
+}
+.db-plan-tier { font-size: 12px; font-weight: 600; color: var(--navy); }
+.db-plan-hint { font-size: 10px; color: var(--ink4); }
+
+/* ── Section ───────────────────────────────────────────────────── */
+.db-section {
+  margin-bottom: 28px;
+  background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--rad-lg); overflow: hidden;
+}
+.db-section-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--cream3);
+  background: var(--cream);
+}
+.db-section-icon {
+  width: 36px; height: 36px; background: #fff;
+  border: 1px solid var(--border-light); border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--navy); flex-shrink: 0;
+}
+.db-section-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+.db-section-de { font-size: 11px; color: var(--ink4); font-style: italic; margin-top: 1px; }
+
+/* ── Tax layout: main + sidebar ────────────────────────────────── */
+.db-tax-layout {
+  display: grid; grid-template-columns: 1fr 300px; gap: 0;
+}
+@media (max-width: 720px) { .db-tax-layout { grid-template-columns: 1fr; } }
+
+.db-tax-main { padding: 20px; border-right: 1px solid var(--cream3); }
+@media (max-width: 720px) { .db-tax-main { border-right: none; border-bottom: 1px solid var(--cream3); } }
+
+/* Current year card */
+.db-current-card {
+  padding: 16px; background: var(--cream);
+  border: 1px solid var(--border-light); border-radius: var(--rad);
+  margin-bottom: 20px;
+}
+.db-current-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.db-current-year { font-size: 15px; font-weight: 700; color: var(--navy); }
+.db-current-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 2px;
+}
+.db-badge-progress { background: #e8f5e9; color: #2e7d32; }
+.db-badge-done     { background: #e3f2fd; color: #1565c0; }
+.db-badge-idle     { background: var(--cream3); color: var(--ink4); }
+
+.db-refund-display { margin-bottom: 14px; }
+.db-refund-label { font-size: 11px; color: var(--ink4); margin-bottom: 3px; }
+.db-refund-amount { font-size: 32px; font-weight: 700; letter-spacing: -.02em; color: var(--navy); }
+.db-refund-amount.refund   { color: #2e7d32; }
+.db-refund-amount.liability { color: #c62828; }
+
+.db-progress-section { margin-bottom: 14px; }
+.db-progress-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--ink3); margin-bottom: 6px;
+}
+.db-progress-lang { color: var(--ink4); }
+.db-progress-bar {
+  height: 5px; background: var(--cream3); border-radius: 2px; overflow: hidden;
+}
+.db-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width .3s; }
+
+.db-current-empty { font-size: 13px; color: var(--ink3); line-height: 1.5; margin-bottom: 14px; }
+.db-current-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Filing history */
+.db-history { }
+.db-history-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.db-history-title { font-size: 13px; font-weight: 600; color: var(--navy); }
+.db-history-note { font-size: 10px; color: var(--ink4); font-style: italic; }
+
+.db-hy-row {
+  display: grid; grid-template-columns: 44px 10px 1fr auto;
+  align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: var(--rad);
+  transition: background .12s;
+}
+.db-hy-row:hover { background: var(--cream); }
+.db-hy-row-current { background: var(--cream); border: 1px solid var(--border-light); }
+
+.db-hy-year { font-size: 13px; font-weight: 600; color: var(--navy); }
+.db-hy-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.db-hy-dot-idle   { background: var(--border); }
+.db-hy-dot-active { background: #4caf50; box-shadow: 0 0 0 2px #c8e6c9; }
+.db-hy-dot-done   { background: #1976d2; box-shadow: 0 0 0 2px #bbdefb; }
+
+.db-hy-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.db-hy-status { font-size: 12px; color: var(--ink3); }
+.db-hy-badge {
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 2px;
+  letter-spacing: .03em; text-transform: uppercase; white-space: nowrap;
+}
+.db-hy-badge-progress { background: #e8f5e9; color: #2e7d32; }
+.db-hy-badge-done     { background: #e3f2fd; color: #1565c0; }
+
+.db-hy-actions { display: flex; gap: 10px; align-items: center; }
+.db-hy-link {
+  font-size: 11px; color: var(--gold); text-decoration: none; font-weight: 500;
+  background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 0;
+}
+.db-hy-link:hover { text-decoration: underline; }
+.db-hy-link-muted { color: var(--ink4); }
+
+/* Sidebar */
+.db-tax-sidebar { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+.db-sidebar-card { }
+.db-sidebar-card-title {
+  font-size: 11px; font-weight: 600; color: var(--ink4);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px;
+}
+.db-dl-row {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 4px 10px; padding: 7px 0;
+  border-bottom: 1px solid var(--cream3);
+}
+.db-dl-row:last-of-type { border-bottom: none; }
+.db-dl-date  { font-size: 11px; font-weight: 600; color: var(--ink3); grid-column: 1; }
+.db-dl-title { font-size: 12px; color: var(--ink3); grid-column: 1; }
+.db-dl-days  { font-size: 11px; font-weight: 600; grid-column: 2; grid-row: 1 / 3; align-self: center; }
+.db-sidebar-link {
+  display: inline-block; margin-top: 10px;
+  font-size: 11px; color: var(--gold); text-decoration: none; font-weight: 500;
+}
+.db-sidebar-link:hover { text-decoration: underline; }
+
+.db-news-item { padding: 10px 0; border-bottom: 1px solid var(--cream3); }
+.db-news-item:last-child { border-bottom: none; padding-bottom: 0; }
+.db-news-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.db-news-title { font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.3; }
+.db-news-year  { font-size: 10px; color: var(--ink4); white-space: nowrap; font-style: italic; }
+.db-news-body  { font-size: 11px; color: var(--ink3); line-height: 1.5; }
+
+/* ── Section head CTA ───────────────────────────────────────────── */
+.db-section-head-cta {
+  margin-left: auto; font-size: 12px; padding: 7px 14px;
+  text-decoration: none; flex-shrink: 0;
+}
+
+/* ── Form history body ──────────────────────────────────────────── */
+.db-forms-body { padding: 0; }
+
+.db-forms-table-head {
+  display: grid; grid-template-columns: 1fr 120px 100px 120px;
+  padding: 8px 20px; gap: 12px;
+  font-size: 10px; font-weight: 600; color: var(--ink4);
+  text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1px solid var(--cream3); background: var(--cream);
+}
+
+.db-form-row {
+  display: grid; grid-template-columns: 1fr 120px 100px 120px;
+  padding: 12px 20px; gap: 12px; align-items: center;
+  border-bottom: 1px solid var(--cream3);
+}
+.db-form-row:last-of-type { border-bottom: none; }
+.db-form-row:hover { background: var(--cream); }
+
+.db-form-row-name { display: flex; flex-direction: column; gap: 2px; }
+.db-form-row-title { font-size: 13px; font-weight: 600; color: var(--navy); }
+.db-form-row-de    { font-size: 11px; color: var(--ink4); font-style: italic; }
+.db-form-row-date  { font-size: 12px; color: var(--ink3); }
+.db-form-row-lang  { font-size: 12px; color: var(--ink3); }
+.db-form-row-files { display: flex; gap: 6px; }
+
+.db-form-file-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 2px; cursor: pointer; border: 1px solid;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.db-form-file-original { color: var(--ink4); border-color: var(--border-light); background: #fff; }
+.db-form-file-original:hover { border-color: var(--navy); color: var(--navy); }
+.db-form-file-filled { color: var(--navy); border-color: var(--navy); background: #fff; }
+.db-form-file-filled:hover { background: var(--navy); color: #fff; }
+
+.db-forms-storage-note {
+  padding: 10px 20px; font-size: 11px; color: var(--ink4); font-style: italic;
+  border-top: 1px solid var(--cream3); background: var(--cream);
+}
+
+/* Empty state */
+.db-forms-empty {
+  padding: 40px 32px; display: flex; flex-direction: column; align-items: center;
+  gap: 10px; text-align: center;
+}
+.db-forms-empty-icon { color: var(--navy); opacity: .2; }
+.db-forms-empty-title { font-size: 14px; font-weight: 600; color: var(--navy); }
+.db-forms-empty-body  { font-size: 13px; color: var(--ink3); line-height: 1.6; max-width: 480px; }
+.db-forms-privacy-note {
+  font-size: 11px; color: var(--ink4); line-height: 1.5; max-width: 420px;
+  padding: 8px 14px; background: var(--cream); border: 1px solid var(--border-light);
+  border-radius: var(--rad);
+}
+
+/* ── Plan single ────────────────────────────────────────────────── */
+.db-plan-single {
+  display: grid; grid-template-columns: 180px 1fr;
+  padding: 20px; gap: 24px; align-items: start;
+}
+@media (max-width: 600px) { .db-plan-single { grid-template-columns: 1fr; } }
+
+.db-plan-single-left { display: flex; flex-direction: column; gap: 4px; }
+.db-plan-since { font-size: 11px; color: var(--ink4); }
+.db-plan-features-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px;
+}
+@media (max-width: 500px) { .db-plan-features-grid { grid-template-columns: 1fr; } }
+
+/* chips */
+.db-chip {
+  font-size: 11px; padding: 3px 9px; background: var(--cream);
+  border: 1px solid var(--border-light); border-radius: 2px; color: var(--ink3);
+}
+
+/* ── Plan layout ────────────────────────────────────────────────── */
+.db-plan-current-badge { font-size: 10px; font-weight: 600; background: var(--gold); color: var(--navy); padding: 1px 7px; border-radius: 2px; text-transform: uppercase; letter-spacing: .04em; }
+.db-plan-price { font-size: 26px; font-weight: 700; color: var(--navy); letter-spacing: -.02em; }
+.db-plan-price-sub { font-size: 13px; font-weight: 400; color: var(--ink4); }
+.db-plan-features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.db-plan-features li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink2); }
+.db-plan-check { color: var(--navy); flex-shrink: 0; margin-top: 1px; }
+
+/* ── Account footer bar ─────────────────────────────────────────── */
+.db-account-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-top: 4px;
+  border-top: 1px solid var(--border-light);
+  flex-wrap: wrap; gap: 10px;
+}
+.db-account-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.db-account-email    { font-size: 12px; color: var(--ink3); font-weight: 500; }
+.db-account-provider { font-size: 12px; color: var(--ink4); }
+.db-account-sep      { font-size: 12px; color: var(--border); }
+.db-account-links { display: flex; align-items: center; gap: 14px; }
+.db-account-link {
+  font-size: 11px; color: var(--ink4); text-decoration: none;
+  background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 0;
+}
+.db-account-link:hover { color: var(--navy); text-decoration: underline; }
+
+/* ── Responsive welcome ─────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .db-welcome-bar { flex-direction: column; align-items: flex-start; }
+  .db-plan-badge { align-items: flex-start; }
+}

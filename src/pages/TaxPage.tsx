@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import TaxStepBar from '../components/tax/TaxStepBar';
 import TaxLanguageStep from '../components/tax/TaxLanguageStep';
@@ -90,7 +90,12 @@ export default function TaxPage() {
   return (
     <div className="shell">
       <Header onLogoClick={handleLogoClick} tagline="German tax return · guided in your language · maximise your refund" />
-      <div style={{ margin: '8px 0 16px', textAlign: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '4px 0 8px' }}>
+        <Link to="/dashboard" style={{ fontSize: 12, color: 'var(--ink4)', textDecoration: 'none' }}>
+          &larr; Dashboard
+        </Link>
+      </div>
+      <div style={{ margin: '0 0 16px', textAlign: 'center' }}>
         <span style={{ fontSize: 13, color: 'var(--ink3)', fontWeight: 500 }}>
           German Personal Tax Filing &middot; <span style={{ color: 'var(--ink4)' }}>Einkommensteuererkl&auml;rung</span>
         </span>

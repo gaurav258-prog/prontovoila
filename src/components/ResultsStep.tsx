@@ -2,7 +2,7 @@ import { useAppStore } from '../store/appStore';
 import { generateOverlayPdf, generateSummaryPdf } from '../services/pdfGenerator';
 
 export default function ResultsStep() {
-  const { filledFields, fields, formMeta, formAnalysis, langLabel, langCode, file, fileB64, fileMime, signatures, reset, setStep } = useAppStore();
+  const { filledFields, fields, formMeta, formAnalysis, langLabel, langCode, file, fileB64, fileMime, signatures, hasAcroFields, reset, setStep } = useAppStore();
 
   const filled = filledFields.filter((f) => !f.skipped);
 
@@ -14,6 +14,7 @@ export default function ResultsStep() {
       filledFields,
       fields,
       signatures,
+      hasAcroFields,
     });
     const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);

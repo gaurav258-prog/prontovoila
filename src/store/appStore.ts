@@ -21,6 +21,7 @@ interface AppState {
   signatures: SignatureData[];
   userConfirmed: boolean;
   testMode: boolean;
+  hasAcroFields: boolean; // true = PDF has real form fields; fill by name. false = use coordinate overlay.
 
   setStep: (step: AppStep) => void;
   setTestMode: (mode: boolean) => void;
@@ -28,6 +29,7 @@ interface AppState {
   setLanguage: (code: string, label: string) => void;
   setFormMeta: (meta: FormMeta) => void;
   setFormAnalysis: (analysis: FormAnalysis) => void;
+  setHasAcroFields: (has: boolean) => void;
   setFields: (fields: FormField[]) => void;
   setAnswer: (fieldId: string, value: string) => void;
   setFilledFields: (fields: FilledField[]) => void;
@@ -64,6 +66,7 @@ const initialState = {
   signatures: [],
   userConfirmed: false,
   testMode: false,
+  hasAcroFields: false,
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -74,6 +77,7 @@ export const useAppStore = create<AppState>((set) => ({
   setLanguage: (langCode, langLabel) => set({ langCode, langLabel }),
   setFormMeta: (formMeta) => set({ formMeta }),
   setFormAnalysis: (formAnalysis) => set({ formAnalysis }),
+  setHasAcroFields: (hasAcroFields) => set({ hasAcroFields }),
   setFields: (fields) => set({ fields }),
   setAnswer: (fieldId, value) =>
     set((state) => ({ answers: { ...state.answers, [fieldId]: value } })),

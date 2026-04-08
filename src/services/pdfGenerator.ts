@@ -9,6 +9,53 @@ const CREAM = rgb(245 / 255, 244 / 255, 240 / 255);
 const WHITE = rgb(1, 1, 1);
 // DARK_BLUE removed — filled text now uses INK to match form's own typography;
 
+// ── Smart text fitting with dynamic font sizing ──
+interface TextFitResult {
+  fontSize: number;      // Calculated font size that fits the space
+  text: string;          // Original or truncated text
+  truncated: boolean;    // Whether text was truncated
+}
+
+/**
+ * Calculate optimal font size for text to fit in available space.
+ * If text still doesn't fit at minFontSize, truncate with ellipsis.
+ */
+function fitTextToSpace(
+  text: string,
+  availableWidthPts: number,
+  _availableHeightPts: number, // Reserved for future vertical text fitting
+  nativeFontSize: number,
+  minFontSize: number = 6,
+  maxFontSize: number = 14
+): TextFitResult {
+  // Helvetica character width is roughly 0.52 × fontSize (in points)
+  const charWidthFactor = 0.52;
+  const estimatedWidth = (text.length * charWidthFactor * nativeFontSize);
+
+  if (estimatedWidth <= availableWidthPts && nativeFontSize <= maxFontSize) {
+    // Text fits at native size
+    return { fontSize: nativeFontSize, text, truncated: false };
+  }
+
+  // Calculate optimal font size to fit the available width
+  let calculatedSize = nativeFontSize * (availableWidthPts / estimatedWidth);
+  calculatedSize = Math.max(minFontSize, Math.min(calculatedSize, maxFontSize));
+
+  // Check if text still fits at minimum font size
+  const minWidthNeeded = text.length * charWidthFactor * minFontSize;
+  if (minWidthNeeded > availableWidthPts) {
+    // Text needs to be truncated — add ellipsis
+    const ellipsis = '…';
+    const ellipsisWidth = ellipsis.length * charWidthFactor * calculatedSize;
+    const availableForText = availableWidthPts - ellipsisWidth;
+    const maxChars = Math.max(1, Math.floor(availableForText / (charWidthFactor * calculatedSize)));
+    const truncated = text.substring(0, maxChars) + ellipsis;
+    return { fontSize: calculatedSize, text: truncated, truncated: true };
+  }
+
+  return { fontSize: calculatedSize, text, truncated: false };
+}
+
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -434,16 +481,48 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
         page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: TEXT_COLOR });
       }
     } else {
-      page.drawText(filled.value, {
+      // Smart text fitting: calculate optimal font size based on available space
+      const availableWidth = maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4;
+      const availableHeight = (field.position?.heightPct ?? 3) / 100 * pagePh;
+      const minSize = field.minFontSize ?? 6;
+      const maxSize = field.maxFontSize ?? fontSize;
+
+      const fitResult = fitTextToSpace(
+        filled.value,
+        availableWidth,
+        availableHeight,
+        fontSize,
+        minSize,
+        maxSize
+      );
+
+      page.drawText(fitResult.text, {
         x,
         y,
-        size: fontSize,
+        size: fitResult.fontSize,
         font,
         color: TEXT_COLOR,
-        maxWidth: maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4,
+        maxWidth: availableWidth,
       });
     }
   });
+
+  // ── Auto-detection and placement of metadata (date, signature) ──
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  // Auto-fill missing date field
+  const dateField = dataFields.find(f => f.type === 'date' || f.label.toLowerCase().includes('datum'));
+  if (dateField) {
+    const dateFilled = filledFields.find(f => f.id === dateField.id);
+    if (!dateFilled || !dateFilled.value) {
+      filledFields.push({
+        id: dateField.id,
+        label: dateField.label,
+        value: today,
+        source: 'edited'
+      });
+    }
+  }
 
   // Place signatures
   sigFields.forEach((field, idx) => {

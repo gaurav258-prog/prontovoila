@@ -25,6 +25,12 @@ export interface FormField {
   pdfFieldName?: string; // Exact AcroForm field name in the PDF — used for direct field filling
   pdfFieldRect?: { width: number; height: number }; // actual PDF widget rectangle in pts
   pdfFieldFontSize?: number; // font size from field /DA stream
+
+  // Spatial constraints for smart rendering
+  minFontSize?: number; // minimum font size to use (prevents unreadably small text)
+  maxFontSize?: number; // maximum font size to use (from form template)
+  isAutoMetadata?: boolean; // true if this is auto-detected (date, signature) — should be filled automatically
+
   splitIndex?: number; // 0-based position within a combined field (undefined = not split)
   splitPct?: number; // % of field width this sub-column occupies (must sum to 100 across siblings)
   pairedNeinPdfFieldName?: string; // for ja/nein checkbox pairs: the "nein" checkbox's pdfFieldName

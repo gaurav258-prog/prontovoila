@@ -334,6 +334,8 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let fields: FormField[] = parsed.fields.map((f: any) => {
     const acroMatch = acroFields.find(a => a.name === f.pdfFieldName);
+    const nativeFontSize = acroMatch?.fontSize ?? 10;
+
     return {
       id: f.id,
       label: f.label,
@@ -345,7 +347,13 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
       options: f.options || acroMatch?.options,
       pdfFieldName: f.pdfFieldName,
       pdfFieldRect: acroMatch?.rect,
-      pdfFieldFontSize: acroMatch?.fontSize,
+      pdfFieldFontSize: nativeFontSize,
+
+      // Spatial constraints for smart rendering
+      minFontSize: 6, // Never smaller than this
+      maxFontSize: nativeFontSize, // Don't exceed form's native size
+      isAutoMetadata: false, // Will be set true for auto-filled fields (date, signature)
+
       splitIndex: f.splitIndex,
       splitPct: f.splitPct,
       pairedNeinPdfFieldName: f.pairedNeinPdfFieldName,

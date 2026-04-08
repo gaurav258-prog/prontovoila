@@ -402,9 +402,9 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
     };
     rightColumnOverlays.push(rightField);
 
-    // Mark the original field as "left column only" by removing split info
-    field.splitIndex = undefined;
-    field.splitPct = undefined;
+    // Keep the original field's split info so questionnaire still asks for left/right separately.
+    // The split fields (splitIndex 0 and 1) are used to collect user input,
+    // then in pdfGenerator: left goes to AcroForm, right goes to coordinate overlay.
   }
 
   fields = [...fields, ...rightColumnOverlays];

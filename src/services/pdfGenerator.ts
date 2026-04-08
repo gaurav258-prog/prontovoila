@@ -188,6 +188,9 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
       byPdfFieldName.set(field.pdfFieldName, group);
     }
 
+    // Track which paired nein fields have been handled (to avoid processing them twice)
+    const handledPairedFields = new Set<string>();
+
     for (const [pdfFieldName, group] of byPdfFieldName) {
       // Sort by splitIndex so sub-fields are in correct left-to-right order
       const sorted = [...group].sort((a, b) => (a.splitIndex ?? 0) - (b.splitIndex ?? 0));
@@ -195,6 +198,12 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
       if (sorted.length === 1 && sorted[0].splitIndex === undefined) {
         // Simple single field
         const field = sorted[0];
+
+        // Skip if this is a paired nein field that was already handled by its ja counterpart
+        if (field.pairedNeinPdfFieldName === undefined && handledPairedFields.has(pdfFieldName)) {
+          continue;
+        }
+
         const filled = filledFields.find(f => f.id === field.id);
         if (!filled || filled.skipped || !filled.value) continue;
         // Clamp font size: if the PDF's /DA has fontSize=0 (auto-size), it can blow up in tall fields
@@ -213,6 +222,8 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
               try {
                 const neinCb = form.getCheckBox(field.pairedNeinPdfFieldName);
                 if (isYes) neinCb.uncheck(); else neinCb.check();
+                // Mark the paired nein field as handled so we don't process it again
+                handledPairedFields.add(field.pairedNeinPdfFieldName);
               } catch { /* field not found */ }
             }
           } else if (field.type === 'select') {
@@ -410,7 +421,18 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   // Place each data field value
   // Priority: (1) Claude's position data → (2) label-anchor in PDF text → (3) even distribution
   dataFields.forEach((field, idx) => {
-    const filled = filledFields.find((f) => f.id === field.id);
+    let filled = filledFields.find((f) => f.id === field.id);
+
+    // For synthetic overlay fields (_right), find the corresponding split field data
+    if (!filled && field.id.endsWith('_right')) {
+      const originalId = field.id.replace('_right', '');
+      // Find the right-column version (splitIndex=1) of the original field
+      const rightSplitField = fields.find((f) => f.id === originalId && f.splitIndex === 1);
+      if (rightSplitField) {
+        filled = filledFields.find((f) => f.id === rightSplitField.id);
+      }
+    }
+
     if (!filled || filled.skipped || !filled.value) return;
 
     const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);

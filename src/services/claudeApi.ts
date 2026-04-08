@@ -238,6 +238,11 @@ export async function analyzeForm(
 
     // Extract text context with timeout protection (max 5 seconds)
     fieldContextMap = await extractFieldContextFast(rawBytes, acroFields);
+    console.log('📊 TEXT EXTRACTION COMPLETE:', {
+      fieldsWithContext: fieldContextMap.size,
+      totalFields: acroFields.length,
+      contextSample: Array.from(fieldContextMap.entries()).slice(0, 3),
+    });
   }
 
   const hasAcroFields = acroFields.length > 0;
@@ -274,6 +279,14 @@ export async function analyzeForm(
         return `  ${base} }`;
       })
       .join(',\n');
+
+    // Log how many fields have context included
+    const fieldsWithContext = acroFields.filter(f => fieldContextMap.has(f.name)).length;
+    console.log('📝 FIELD LIST CONTEXT:', {
+      fieldsWithContext,
+      totalFields: acroFields.length,
+      percentage: Math.round((fieldsWithContext / acroFields.length) * 100) + '%',
+    });
 
     systemPrompt = `You are a form analysis expert. This PDF has ${acroFields.length} interactive AcroForm fields already defined.
 
@@ -475,6 +488,7 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
   // If multiple fields have the same label (e.g., "Place of Birth" appearing 3 times),
   // keep only the first one to avoid confusing the user with duplicate questions
   const seenLabels = new Set<string>();
+  const fieldsBeforeDedupe = fields.length;
   fields = fields.filter((field) => {
     const key = `${field.label}|${field.pdfFieldName}`; // Deduplicate by label + pdfFieldName combo
     if (seenLabels.has(key)) {
@@ -483,6 +497,12 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
     }
     seenLabels.add(key);
     return true;
+  });
+
+  console.log('🧹 DEDUPLICATION:', {
+    before: fieldsBeforeDedupe,
+    after: fields.length,
+    removed: fieldsBeforeDedupe - fields.length,
   });
 
   // ── Handle combined fields (e.g. "Name Vorname") via coordinate overlay ──

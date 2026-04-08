@@ -54,6 +54,29 @@ function generateQuestionForField(field: AcroFormField): { label: string; questi
 }
 
 /**
+ * Detect language from AcroForm field names
+ */
+function detectLanguageFromFields(acroFields: AcroFormField[]): { code: string; label: string } {
+  // Collect all field names to detect language patterns
+  const allText = acroFields.map(f => f.name + (f.nearbyLabels?.join(' ') || '')).join(' ');
+
+  // German indicators (very common in German forms)
+  const germanWords = /geburtsdatum|geburtsort|staatsangehörigkeit|straße|hausnummer|postleitzahl|wohnort|name|vorname|geschlecht|reisepass|einreise|dauer|grund|aufenthalt|anschrift|beziehung|ehegatte|kinder|verpflichtung/i;
+
+  // Check for German language markers
+  if (germanWords.test(allText)) {
+    // Count how many German indicators are found
+    const germanMatches = allText.match(germanWords);
+    if (germanMatches && germanMatches.length >= 3) {
+      return { code: 'de', label: 'German' };
+    }
+  }
+
+  // Default to unknown if no clear language pattern detected
+  return { code: 'unknown', label: 'Unknown' };
+}
+
+/**
  * Map AcroForm field type to FormField type
  */
 function mapFieldType(acroType: string): FormField['type'] {
@@ -112,10 +135,13 @@ export function analyzeAcroFormFields(
     fields.push(field);
   }
 
+  // Detect language from field names
+  const detectedLang = detectLanguageFromFields(acroFields);
+
   // Create the analysis summary
   const analysis: FormAnalysis = {
-    detectedLanguage: 'unknown',
-    detectedLanguageLabel: 'Unknown',
+    detectedLanguage: detectedLang.code,
+    detectedLanguageLabel: detectedLang.label,
     formTitleOriginal: 'Form',
     formTitleTranslated: 'Form',
     summary: `This form contains ${acroFields.length} fields to fill.`,

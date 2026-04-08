@@ -318,14 +318,26 @@ SPLIT vs SEPARATE FIELDS:
 - Two different pdfFieldNames on the same visual row → SEPARATE fields, each gets its own entry
 - ONE pdfFieldName spanning both columns (width > 60% of page) → SPLIT field, use splitIndex/splitPct
 
-KNOWN SPLIT FIELDS (create TWO entries with same pdfFieldName, splitIndex 0 and 1):
-- "Name Vorname" → left="Last Name" (splitIndex:0), right="First Name" (splitIndex:1)
-- "Name Vorname_2" → left="Last Name" (splitIndex:0), right="First Name" (splitIndex:1)
-- "Geburtsdatum Geburtsort" → left="Date of Birth" (splitIndex:0), right="Place of Birth" (splitIndex:1)
-- "GeburtsdatumGeschlechtwm Geburtsort" → left="Date/Gender" (splitIndex:0), right="Place of Birth" (splitIndex:1)
-- "Staatsangehörigkeit Beruf  Arbeitgeber" → left="Nationality" (splitIndex:0), right="Occupation/Employer" (splitIndex:1)
-- "Staatsangehörigkeit Reisepassnummer" → left="Nationality" (splitIndex:0), right="Passport Number" (splitIndex:1)
-- "Straße  Hausnummer Postleitzahl  Wohnort" → left="Street/House Number" (splitIndex:0), right="Postcode/City" (splitIndex:1)
+SPLIT FIELDS ALGORITHM (applies to ALL forms, not just known patterns):
+A field is SPLIT if:
+1. It has one pdfFieldName but spans >60% of page width, OR
+2. It's marked "separate":true but visually spans both left and right columns, OR
+3. It contains TWO OR MORE visually distinct input areas on the same horizontal line
+
+For ANY split field you identify (whether in the list below or not):
+- Create EXACTLY TWO field entries with the SAME pdfFieldName
+- First entry: "splitIndex": 0, label for LEFT side content
+- Second entry: "splitIndex": 1, label for RIGHT side content
+- The system will automatically render left via AcroForm, right via overlay
+
+KNOWN SPLIT FIELDS (examples - use algorithm above for unknown forms):
+- "Name Vorname" → [left="Last Name" (splitIndex:0), right="First Name" (splitIndex:1)]
+- "Geburtsdatum Geburtsort" → [left="Date of Birth" (splitIndex:0), right="Place of Birth" (splitIndex:1)]
+- "Staatsangehörigkeit Beruf  Arbeitgeber" → [left="Nationality" (splitIndex:0), right="Occupation/Employer" (splitIndex:1)]
+- "Staatsangehörigkeit Reisepassnummer" → [left="Nationality" (splitIndex:0), right="Passport Number" (splitIndex:1)]
+- "Straße  Hausnummer Postleitzahl  Wohnort" → [left="Street/House Number" (splitIndex:0), right="Postcode/City" (splitIndex:1)]
+
+When in doubt about whether a field is split, err on the side of creating splitIndex 0 and 1 entries.
 
 YES/NO CHECKBOX PAIRS: Create ONE field entry using the ja/yes checkbox pdfFieldName, set type="yesno", add pairedNeinPdfFieldName.
 

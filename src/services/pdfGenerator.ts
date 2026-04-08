@@ -422,56 +422,46 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
 
     if (!filled || filled.skipped || !filled.value) return;
 
-    // For right-side split fields (splitIndex=1), render via coordinate overlay on the right side
-    if (field.splitIndex === 1 && field.pdfFieldName && doc) {
-      // Find the split field's rectangle in the PDF
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const splitAcroField = (doc as any).form?.getFields?.()?.find((f: any) => f.getName?.() === field.pdfFieldName);
-      if (splitAcroField) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const widgets = (splitAcroField as any).acroField?.getWidgets?.() || [];
-        const rect = widgets[0]?.getRectangle?.();
+    // ── Simple position-based rendering ──
+    // Use the AcroForm field's actual PDF rectangle for exact positioning
+    if (field.pdfFieldRect) {
+      const pageIdx = Math.min(field.pdfFieldRect.page - 1, pages.length - 1);
+      const page = pages[pageIdx];
+      const pagePw = page.getWidth();
+      const pagePh = page.getHeight();
+      const fontSize = pageFontSizes[pageIdx] ?? field.pdfFieldFontSize ?? 10;
 
-        if (rect) {
-          const pageNum = 0; // AcroForm fields are typically on first page
-          const page = pages[pageNum];
-          const pagePw = page.getWidth();
-          const pagePh = page.getHeight();
-          const fontSize = pageFontSizes[pageNum] ?? 10;
+      // Convert PDF coordinates (bottom-left origin) to pdf-lib coordinates
+      const x = field.pdfFieldRect.x + 3;
+      const y = pagePh - (field.pdfFieldRect.y + field.pdfFieldRect.height / 2) - (fontSize * 0.35);
+      const maxTextWidth = Math.max(field.pdfFieldRect.width - 8, 40);
 
-          // Split the field in half: right side starts at 50% of field width
-          const fieldCenterX = rect.x + (rect.width / 2);
-          const rightColumnX = fieldCenterX;
-          const rightColumnWidth = rect.width / 2;
-
-          const boxLeft = rightColumnX;
-          const boxTop = pagePh - rect.y;
-          const boxHeight = rect.height;
-          const boxWidth = rightColumnWidth;
-
-          const x = boxLeft + 3;
-          const y = boxTop - (boxHeight / 2) - (fontSize * 0.35);
-          const maxTextWidth = Math.max(boxWidth - 8, 40);
-
-          // Render the right-side value
-          if (field.type === 'yesno') {
-            const mark = filled.value.toLowerCase() === 'yes' ? 'X' : '';
-            if (mark) {
-              page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: TEXT_COLOR });
-            }
-          } else {
-            const availableWidth = maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4;
-            const minSize = field.minFontSize ?? 6;
-            const maxSize = field.maxFontSize ?? fontSize;
-
-            const fitResult = fitTextToSpace(filled.value, availableWidth, boxHeight, fontSize, minSize, maxSize);
-            page.drawText(fitResult.text, { x, y, size: fitResult.fontSize, font, color: TEXT_COLOR });
-          }
-          return; // Skip normal rendering for split fields
+      // Render at this position
+      if (field.type === 'yesno') {
+        const mark = filled.value.toLowerCase() === 'yes' ? 'X' : '';
+        if (mark) {
+          page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: TEXT_COLOR });
         }
+      } else {
+        const availableWidth = maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4;
+        const availableHeight = field.pdfFieldRect.height;
+        const minSize = field.minFontSize ?? 6;
+        const maxSize = field.maxFontSize ?? fontSize;
+
+        const fitResult = fitTextToSpace(filled.value, availableWidth, availableHeight, fontSize, minSize, maxSize);
+        page.drawText(fitResult.text, {
+          x,
+          y,
+          size: fitResult.fontSize,
+          font,
+          color: TEXT_COLOR,
+          maxWidth: availableWidth,
+        });
       }
+      return; // Rendering complete
     }
 
+    // Fallback for non-AcroForm fields with position data
     const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];
     const pagePw = page.getWidth();

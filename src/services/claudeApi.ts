@@ -228,14 +228,12 @@ export async function analyzeForm(
 ): Promise<{ analysis: FormAnalysis; fields: FormField[]; hasAcroFields: boolean }> {
 
   let acroFields: AcroField[] = [];
-  let pageWidths: number[] = [];
   let fieldContextMap = new Map<string, string[]>();
 
   if (fileMime === 'application/pdf') {
     const rawBytes = Uint8Array.from(atob(fileB64), c => c.charCodeAt(0));
     const result = await extractAcroFields(rawBytes);
     acroFields = result.fields;
-    pageWidths = result.pageWidths;
 
     // Extract text context with timeout protection (max 5 seconds)
     fieldContextMap = await extractFieldContextFast(rawBytes, acroFields);
@@ -525,64 +523,11 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
     removed: fieldsBeforeDedupe - fields.length,
   });
 
-  // ── Handle combined fields (e.g. "Name Vorname") via coordinate overlay ──
-  // These fields span both left and right columns visually but are single AcroForm fields.
-  // Split them: left goes via AcroForm, right goes via coordinate overlay (Path B style).
-  const combinedFieldPatterns = [
-    { fieldName: 'Name Vorname', leftLabel: 'Last Name', rightLabel: 'First Name', rightPct: 52 },
-    { fieldName: 'Name Vorname_2', leftLabel: 'Last Name', rightLabel: 'First Name', rightPct: 52 },
-    { fieldName: 'Geburtsdatum Geburtsort', leftLabel: 'Date of Birth', rightLabel: 'Place of Birth', rightPct: 62 },
-    { fieldName: 'GeburtsdatumGeschlechtwm Geburtsort', leftLabel: 'Date/Gender', rightLabel: 'Place of Birth', rightPct: 65 },
-    { fieldName: 'Staatsangehörigkeit Beruf  Arbeitgeber', leftLabel: 'Nationality', rightLabel: 'Occupation/Employer', rightPct: 58 },
-    { fieldName: 'Staatsangehörigkeit Reisepassnummer', leftLabel: 'Nationality', rightLabel: 'Passport Number', rightPct: 55 },
-    { fieldName: 'Straße  Hausnummer Postleitzahl  Wohnort', leftLabel: 'Street/Number', rightLabel: 'Postcode/City', rightPct: 45 },
-  ];
-
-  const rightColumnOverlays: FormField[] = [];
-  for (const field of fields) {
-    const pattern = combinedFieldPatterns.find(p => p.fieldName === field.pdfFieldName);
-    if (!pattern || !field.pdfFieldRect) continue;
-
-    // Get the actual page width from the PDF
-    const acroFieldInfo = acroFields.find(a => a.name === field.pdfFieldName);
-    const pageNum = acroFieldInfo?.rect.page ?? 1;
-    const pageWidth = pageWidths[pageNum - 1] ?? 595; // A4 default: 595 points
-
-    // Calculate right column position as a percentage of the page
-    // rightColumnX = left edge of right column in PDF points
-    const rightColumnX = acroFieldInfo!.rect.x + acroFieldInfo!.rect.width * (pattern.rightPct / 100);
-    const rightColumnXPct = (rightColumnX / pageWidth) * 100;
-
-    // Calculate right column width as a percentage of the page
-    const rightColumnWidthPct = (acroFieldInfo!.rect.width * (1 - pattern.rightPct / 100)) / pageWidth * 100;
-    const pageHeight = (pageWidth * 11) / 8.5; // A4 aspect ratio: 210 x 297mm
-
-    const rightField: FormField = {
-      id: `${field.id}_right`,
-      label: pattern.rightLabel,
-      labelOriginal: pattern.rightLabel,
-      type: field.type,
-      required: field.required,
-      format: field.format,
-      question: field.question?.replace(pattern.leftLabel, pattern.rightLabel),
-      options: field.options,
-      pdfFieldName: undefined, // No AcroForm field — use coordinate overlay
-      position: {
-        page: pageNum - 1, // 0-based page index
-        xPct: rightColumnXPct,
-        yPct: (pageHeight - acroFieldInfo!.rect.y - acroFieldInfo!.rect.height / 2) / pageHeight * 100, // Convert PDF y to top-left origin
-        widthPct: rightColumnWidthPct,
-        heightPct: (acroFieldInfo!.rect.height / pageHeight) * 100,
-      },
-    };
-    rightColumnOverlays.push(rightField);
-
-    // Keep the original field's split info so questionnaire still asks for left/right separately.
-    // The split fields (splitIndex 0 and 1) are used to collect user input,
-    // then in pdfGenerator: left goes to AcroForm, right goes to coordinate overlay.
-  }
-
-  fields = [...fields, ...rightColumnOverlays];
+  // ✅ REMOVED: Form-specific combined field splitting logic
+  // The AcroForm analyzer now handles ALL fields generically.
+  // Fields like "Name Vorname" are presented as-is to the user.
+  // The PDF's AcroForm structure is trusted — if the PDF designer combined
+  // fields, the user fills them as combined. No hardcoding per form.
 
   const mandatoryFields = fields.filter((f) => f.required);
   const optionalFields = fields.filter((f) => !f.required);

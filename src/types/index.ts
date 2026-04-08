@@ -23,7 +23,7 @@ export interface FormField {
   question?: string;
   position?: FieldPosition;
   pdfFieldName?: string; // Exact AcroForm field name in the PDF — used for direct field filling
-  pdfFieldRect?: { width: number; height: number }; // actual PDF widget rectangle in pts
+  pdfFieldRect?: { x: number; y: number; width: number; height: number; page: number }; // actual PDF widget rectangle in pts
   pdfFieldFontSize?: number; // font size from field /DA stream
 
   // Spatial constraints for smart rendering

@@ -181,6 +181,17 @@ export interface OverlayPdfOptions {
   hasAcroFields?: boolean; // If true, fill using AcroForm fields by name (Path A)
 }
 
+// Map of split field patterns: rightLabel -> { pdfFieldName, rightPct }
+const SPLIT_FIELD_MAP: Record<string, { pdfFieldName: string; rightPct: number }> = {
+  'First Name': { pdfFieldName: 'Name Vorname', rightPct: 52 },
+  'Place of Birth': { pdfFieldName: 'Geburtsdatum Geburtsort', rightPct: 62 },
+  'Occupation/Employer': { pdfFieldName: 'Staatsangehörigkeit Beruf  Arbeitgeber', rightPct: 58 },
+  'Passport Number': { pdfFieldName: 'Staatsangehörigkeit Reisepassnummer', rightPct: 55 },
+  'Postcode/City': { pdfFieldName: 'Straße  Hausnummer Postleitzahl  Wohnort', rightPct: 45 },
+  'Guest Place of Birth': { pdfFieldName: 'Guest Geburtsdatum Geburtsort', rightPct: 62 },
+  'Guest Accommodation Address': { pdfFieldName: 'Guest Postcode/City Guest Address', rightPct: 60 },
+};
+
 export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Uint8Array> {
   const { originalFileB64, originalFileMime, filledFields, fields, signatures, hasAcroFields } = options;
   const rawBytes = base64ToUint8Array(originalFileB64);
@@ -417,17 +428,71 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   dataFields.forEach((field, idx) => {
     let filled = filledFields.find((f) => f.id === field.id);
 
-    // For synthetic overlay fields (_right), find the corresponding split field data
-    if (!filled && field.id.endsWith('_right')) {
-      const originalId = field.id.replace('_right', '');
-      // Find the right-column version (splitIndex=1) of the original field
-      const rightSplitField = fields.find((f) => f.id === originalId && f.splitIndex === 1);
-      if (rightSplitField) {
-        filled = filledFields.find((f) => f.id === rightSplitField.id);
+    if (!filled || filled.skipped || !filled.value) return;
+
+    // Check if this field is a right-side split field that needs coordinate overlay rendering
+    const splitFieldPattern = SPLIT_FIELD_MAP[field.label];
+    let rightSideOverlayData: { pdfFieldName: string; rightPct: number; x: number; y: number; width: number; height: number } | null = null;
+
+    if (splitFieldPattern) {
+      // This field is the right side of a split field — find the split field's position in the PDF
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const splitFieldDef = (doc as any)?.form?.getFields?.()?.find((f: any) => f.getName?.() === splitFieldPattern.pdfFieldName);
+      if (splitFieldDef) {
+        // Get the field's rectangle from the PDF
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const widgets = (splitFieldDef as any).acroField?.getWidgets?.() || [];
+        const rect = widgets[0]?.getRectangle?.();
+        if (rect) {
+          rightSideOverlayData = {
+            pdfFieldName: splitFieldPattern.pdfFieldName,
+            rightPct: splitFieldPattern.rightPct,
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          };
+        }
       }
     }
 
-    if (!filled || filled.skipped || !filled.value) return;
+    // For right-side split fields, render via coordinate overlay
+    if (rightSideOverlayData && doc) {
+      const pageNum = 0; // Will be first page typically
+      const page = pages[pageNum];
+      const pagePw = page.getWidth();
+      const pagePh = page.getHeight();
+      const fontSize = pageFontSizes[pageNum] ?? 10;
+
+      // Calculate right column position
+      const rightColumnX = rightSideOverlayData.x + rightSideOverlayData.width * (rightSideOverlayData.rightPct / 100);
+      const rightColumnWidth = rightSideOverlayData.width * (1 - rightSideOverlayData.rightPct / 100);
+
+      const boxLeft = rightColumnX;
+      const boxTop = pagePh - rightSideOverlayData.y;
+      const boxHeight = rightSideOverlayData.height;
+      const boxWidth = rightColumnWidth;
+
+      const x = boxLeft + 3;
+      const y = boxTop - (boxHeight / 2) - (fontSize * 0.35);
+      const maxTextWidth = Math.max(boxWidth - 8, 40);
+
+      // Render the right-side value
+      if (field.type === 'yesno') {
+        const mark = filled.value.toLowerCase() === 'yes' ? 'X' : '';
+        if (mark) {
+          page.drawText(mark, { x, y, size: fontSize, font: fontBold, color: TEXT_COLOR });
+        }
+      } else {
+        const availableWidth = maxTextWidth > 0 ? maxTextWidth : pagePw * 0.4;
+        const minSize = field.minFontSize ?? 6;
+        const maxSize = field.maxFontSize ?? fontSize;
+
+        const fitResult = fitTextToSpace(filled.value, availableWidth, boxHeight, fontSize, minSize, maxSize);
+        page.drawText(fitResult.text, { x, y, size: fitResult.fontSize, font, color: TEXT_COLOR });
+      }
+      return; // Skip normal rendering for split fields
+    }
 
     const pageIdx = Math.min(field.position?.page ?? 0, pages.length - 1);
     const page = pages[pageIdx];

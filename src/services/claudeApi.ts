@@ -139,6 +139,76 @@ const API_KEY = 'sk-ant-api03-Mk7dEizh9Vn9g3nYMQlTJ6amILFpwBonYA1pN8T0F8SSBXynE3
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
 /**
+ * Efficiently extract nearby text for PDF fields (with timeout to prevent hangs)
+ * Returns a map of field name -> nearby label text
+ */
+async function extractFieldContextFast(
+  pdfBytes: Uint8Array,
+  acroFields: Array<{ name: string; rect: { x: number; y: number; width: number; height: number; page: number } }>,
+): Promise<Map<string, string[]>> {
+  const contextMap = new Map<string, string[]>();
+
+  try {
+    const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+    if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+
+    // Use a timeout to prevent blocking
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Text extraction timeout')), 5000) // 5 second timeout
+    );
+
+    const extractPromise = (async () => {
+      const pdfJsDoc = await pdfjsLib.getDocument({
+        data: pdfBytes,
+        useSystemFonts: true,
+        isEvalSupported: false,
+        useWorkerFetch: false,
+        disableAutoFetch: true,
+      }).promise;
+
+      for (let pageNum = 1; pageNum <= Math.min(pdfJsDoc.numPages, 2); pageNum++) { // Only first 2 pages for speed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const page = await pdfJsDoc.getPage(pageNum) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const textContent = await page.getTextContent() as any;
+
+        for (const acroField of acroFields) {
+          if (acroField.rect.page !== pageNum || contextMap.has(acroField.name)) continue;
+
+          const nearby: string[] = [];
+          const searchRadius = 100;
+
+          for (const item of textContent.items) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ti = item as any;
+            if (!ti.str?.trim()) continue;
+
+            const dx = Math.abs((ti.transform?.[4] ?? 0) - acroField.rect.x);
+            const dy = Math.abs((ti.transform?.[5] ?? 0) - acroField.rect.y);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < searchRadius) {
+              nearby.push(ti.str.trim());
+            }
+          }
+
+          if (nearby.length > 0) {
+            contextMap.set(acroField.name, nearby.slice(0, 2));
+          }
+        }
+      }
+    })();
+
+    await Promise.race([extractPromise, timeoutPromise]);
+  } catch (err) {
+    // Silently fail — continue without context
+    console.warn('Text extraction skipped or timed out');
+  }
+
+  return contextMap;
+}
+
+/**
  * Robustly extract JSON from Claude's response.
  */
 function extractJson(response: string): string {
@@ -166,67 +236,8 @@ export async function analyzeForm(
     acroFields = result.fields;
     pageWidths = result.pageWidths;
 
-    // Extract text context for each field to help Claude understand unclear names
-    try {
-      const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
-      if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-
-      const pdfJsDoc = await pdfjsLib.getDocument({
-        data: rawBytes,
-        useSystemFonts: true,
-        isEvalSupported: false,
-        useWorkerFetch: false,
-        disableAutoFetch: true,
-      }).promise;
-
-      // For each page, extract text and find nearby text for each field
-      for (let pageNum = 1; pageNum <= pdfJsDoc.numPages; pageNum++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const page = await pdfJsDoc.getPage(pageNum) as any;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const textContent = await page.getTextContent() as any;
-
-        // Build text items list for this page
-        const textItems: Array<{ str: string; x: number; y: number }> = [];
-        for (const item of textContent.items) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ti = item as any;
-          if (ti.str?.trim()) {
-            textItems.push({
-              str: ti.str.trim(),
-              x: ti.transform?.[4] ?? 0,
-              y: ti.transform?.[5] ?? 0,
-            });
-          }
-        }
-
-        // For each field on this page, find nearby text
-        for (const field of acroFields) {
-          if (field.rect.page !== pageNum) continue;
-          if (fieldContextMap.has(field.name)) continue;
-
-          const nearby: string[] = [];
-          const searchRadius = 150;
-
-          for (const text of textItems) {
-            const dx = Math.abs(text.x - field.rect.x);
-            const dy = Math.abs(text.y - field.rect.y);
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < searchRadius) {
-              nearby.push(text.str);
-            }
-          }
-
-          // Store top 3 nearby texts
-          if (nearby.length > 0) {
-            fieldContextMap.set(field.name, nearby.slice(0, 3));
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Could not extract text context, continuing without it');
-    }
+    // Extract text context with timeout protection (max 5 seconds)
+    fieldContextMap = await extractFieldContextFast(rawBytes, acroFields);
   }
 
   const hasAcroFields = acroFields.length > 0;
@@ -273,12 +284,19 @@ ${fieldList}
 
 Your job: look at the form visually and map each AcroForm field to human-readable information.
 
-IMPORTANT: For fields with unclear names (like "Text1", "fill_1"), use the "nearbyLabels" array
-to understand what that field is asking for. Example: if a field is named "Text1" but has
-nearbyLabels: ["Reisepassnummer", "Passport"], then this is the passport number field.
+CRITICAL FOR UNCLEAR FIELD NAMES:
+- Fields named "Text1", "fill_1", "Check Box25", etc. are UNCLEAR
+- ALWAYS use the "nearbyLabels" array to understand what they're asking for
+- Example: "Text1" with nearbyLabels: ["Reisepassnummer", "Passport"] → This is the passport number field
+- Example: "Check Box15" with nearbyLabels: ["yes", "no", "Berufstätigkeit"] → This is a yes/no employment field
+- If nearbyLabels exist, use them to create meaningful label and question
+- If nearbyLabels are empty, ask the user to provide information for that field (don't skip it)
 
-The nearbyLabels are actual text extracted from near the field on the form — use them to
-generate meaningful questions and labels instead of generic ones.
+AVOIDING DUPLICATES:
+- Create ONE entry per unique field concept
+- If the form has 3 checkboxes for "yes/no/no opinion" on the same question, create ONE yesno field with 3 options
+- If you see duplicate labels (e.g. "Place of Birth" appearing twice), investigate: are they really duplicates or
+  different fields on different pages/sections? Create one entry per distinct location, don't create duplicates
 
 Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
 {
@@ -451,6 +469,20 @@ POSITION RULES: "position" is the INPUT BOX where text is written, not the label
         heightPct: f.position.heightPct ?? 4,
       } : undefined,
     };
+  });
+
+  // ── Deduplicate fields with identical labels ──
+  // If multiple fields have the same label (e.g., "Place of Birth" appearing 3 times),
+  // keep only the first one to avoid confusing the user with duplicate questions
+  const seenLabels = new Set<string>();
+  fields = fields.filter((field) => {
+    const key = `${field.label}|${field.pdfFieldName}`; // Deduplicate by label + pdfFieldName combo
+    if (seenLabels.has(key)) {
+      console.warn(`Deduplicating field: ${field.label} (${field.pdfFieldName})`);
+      return false; // Skip duplicate
+    }
+    seenLabels.add(key);
+    return true;
   });
 
   // ── Handle combined fields (e.g. "Name Vorname") via coordinate overlay ──

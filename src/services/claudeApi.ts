@@ -1,4 +1,5 @@
 import type { FormField, FormAnalysis, FilledField, FollowUpQuestion } from '../types';
+import { analyzeAcroFormFields } from './acroFormAnalyzer';
 
 async function sleep(ms: number) {
   return new Promise(r => setTimeout(r, ms));
@@ -247,9 +248,28 @@ export async function analyzeForm(
 
   const hasAcroFields = acroFields.length > 0;
 
+  // ── ACROFORM PATH: Use PDF structure directly, not Claude ──
+  // This is the truly generic approach that works with ANY form
+  if (hasAcroFields) {
+    console.log('🎯 USING ACROFORM ANALYZER (not Claude)', {
+      totalAcroFields: acroFields.length,
+      reason: 'Direct PDF field analysis - generic, reliable, no duplicates',
+    });
+
+    // Add nearby text labels to each field
+    const fieldsWithContext: typeof acroFields = acroFields.map(f => ({
+      ...f,
+      nearbyLabels: fieldContextMap.get(f.name),
+    }));
+
+    const { analysis, fields } = analyzeAcroFormFields(fieldsWithContext);
+    return { analysis, fields, hasAcroFields };
+  }
+
+  // ── FALLBACK: For non-AcroForm PDFs, use Claude ──
   let systemPrompt: string;
 
-  if (hasAcroFields) {
+  if (false) { // This block is now dead code, keeping structure for reference
     const separateFieldNames = new Set<string>();
     const hasPositions = acroFields.some(f => f.rect.x > 0 || f.rect.y > 0);
     if (hasPositions) {

@@ -3,6 +3,7 @@ import { useAppStore } from '../store/appStore';
 import { LANGUAGES, ALL_LANGUAGES } from '../data/languages';
 import { analyzeForm } from '../services/claudeApi';
 import { simulateFormAnalysis, DEMO_FIELDS } from '../data/demoData';
+import { getFormTranslation } from '../data/formMetadata';
 
 export default function DetectStep() {
   const {
@@ -128,7 +129,22 @@ export default function DetectStep() {
               {formAnalysis.formTitleOriginal}
             </span>
             <br />
-            {formAnalysis.formTitleTranslated}
+            {/* Show form title and description in the selected language */}
+            {formAnalysis.formMetadata ? (
+              <>
+                {getFormTranslation(formAnalysis.formMetadata, langCode).title}
+                <br />
+                <span style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                  {getFormTranslation(formAnalysis.formMetadata, langCode).description}
+                </span>
+              </>
+            ) : (
+              <>
+                {formAnalysis.formTitleTranslated}
+                <br />
+                <span style={{ fontSize: 12, marginTop: 8, display: 'block' }}>{formAnalysis.summary}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

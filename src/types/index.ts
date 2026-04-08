@@ -42,12 +42,21 @@ export interface FormMeta {
   totalFields: number;
 }
 
+export interface FormMetadata {
+  formId: string;
+  originalLanguage: string;
+  originalTitle: string;
+  keywords: string[];
+  translations: Record<string, { title: string; description: string }>;
+}
+
 export interface FormAnalysis {
   detectedLanguage: string;
   detectedLanguageLabel: string;
   formTitleOriginal: string;
   formTitleTranslated: string;
   summary: string;
+  formMetadata?: FormMetadata;  // NEW: Metadata for multilingual translations
   mandatoryFields: FormField[];
   optionalFields: FormField[];
 }

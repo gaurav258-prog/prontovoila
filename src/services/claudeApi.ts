@@ -60,11 +60,19 @@ export interface AcroField {
 
 export async function extractAcroFields(pdfBytes: Uint8Array): Promise<{ fields: AcroField[]; pageWidths: number[] }> {
   try {
+    console.log('🔧 extractAcroFields: Starting extraction...');
     const { PDFDocument } = await import('pdf-lib');
+    console.log('🔧 pdf-lib imported successfully');
     const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    console.log('🔧 PDF document loaded');
     const form = doc.getForm();
+    console.log('🔧 Form object obtained');
     const fields = form.getFields();
-    if (fields.length === 0) return { fields: [], pageWidths: [] };
+    console.log('🔧 Fields extracted, count:', fields.length);
+    if (fields.length === 0) {
+      console.log('🔧 No fields found in PDF');
+      return { fields: [], pageWidths: [] };
+    }
 
     const pdfJsRects = new Map<string, { x: number; y: number; width: number; height: number; page: number }>();
     let pageWidths: number[] = [];
@@ -131,7 +139,9 @@ export async function extractAcroFields(pdfBytes: Uint8Array): Promise<{ fields:
 
       return { name, type, rect, fontSize, options };
     }), pageWidths };
-  } catch {
+  } catch (error) {
+    console.error('❌ ACROFIELD EXTRACTION FAILED:', error instanceof Error ? error.message : String(error));
+    console.error('   Falling back to Claude for form analysis');
     return { fields: [], pageWidths: [] };
   }
 }
@@ -230,10 +240,14 @@ export async function analyzeForm(
   let acroFields: AcroField[] = [];
   let fieldContextMap = new Map<string, string[]>();
 
+  console.log('📋 ANALYZEFORM CALLED', { fileMime, fileB64Length: fileB64?.length });
+
   if (fileMime === 'application/pdf') {
     const rawBytes = Uint8Array.from(atob(fileB64), c => c.charCodeAt(0));
+    console.log('📄 PDF BYTES LENGTH:', rawBytes.length);
     const result = await extractAcroFields(rawBytes);
     acroFields = result.fields;
+    console.log('✅ EXTRACTED ACROFIELDS:', acroFields.length);
 
     // Extract text context with timeout protection (max 5 seconds)
     fieldContextMap = await extractFieldContextFast(rawBytes, acroFields);
@@ -245,6 +259,7 @@ export async function analyzeForm(
   }
 
   const hasAcroFields = acroFields.length > 0;
+  console.log('🔍 FIELD DETECTION CHECK:', { hasAcroFields, acroFieldCount: acroFields.length });
 
   // ── ACROFORM PATH: Use PDF structure directly, not Claude ──
   // This is the truly generic approach that works with ANY form
@@ -265,6 +280,7 @@ export async function analyzeForm(
   }
 
   // ── FALLBACK: For non-AcroForm PDFs, use Claude ──
+  console.log('⚠️ NO ACROFORM FIELDS FOUND - FALLING BACK TO CLAUDE API');
   let systemPrompt: string;
 
   if (false) { // This block is now dead code, keeping structure for reference

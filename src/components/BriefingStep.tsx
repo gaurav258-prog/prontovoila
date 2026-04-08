@@ -3,10 +3,11 @@ import { useAppStore } from '../store/appStore';
 import { parseFreehandText } from '../services/claudeApi';
 import { simulateFreehandParse } from '../data/demoData';
 import { getSavedProfile } from '../services/profileStore';
+import { getFormTranslation } from '../data/formMetadata';
 
 export default function BriefingStep() {
   const {
-    formAnalysis, fields, langLabel, setStep,
+    formAnalysis, fields, langLabel, langCode, setStep,
     freehandText, setFreehandText,
     setFilledFields, setFollowUpQuestions, setFollowUpIdx, clearHistory,
     testMode,
@@ -63,7 +64,9 @@ export default function BriefingStep() {
       {/* Summary */}
       <div style={{ margin: '1rem 0 1.5rem' }}>
         <p style={{ fontSize: 13.5, color: 'var(--ink2)', lineHeight: 1.7 }}>
-          {formAnalysis.summary}
+          {formAnalysis.formMetadata
+            ? getFormTranslation(formAnalysis.formMetadata, langCode).description
+            : formAnalysis.summary}
         </p>
       </div>
 

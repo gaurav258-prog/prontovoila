@@ -12,6 +12,7 @@
  */
 
 import type { FormField, FormAnalysis } from '../types';
+import { detectFormType, generateGenericFormTitle, getFormTranslation } from '../data/formMetadata';
 
 export interface AcroFormField {
   name: string;
@@ -55,20 +56,39 @@ function generateQuestionForField(field: AcroFormField): { label: string; questi
 
 /**
  * Detect language from AcroForm field names
+ * Supports: German, Italian, French, English
  */
 function detectLanguageFromFields(acroFields: AcroFormField[]): { code: string; label: string } {
   // Collect all field names to detect language patterns
-  const allText = acroFields.map(f => f.name + (f.nearbyLabels?.join(' ') || '')).join(' ');
+  const allText = acroFields.map(f => f.name + (f.nearbyLabels?.join(' ') || '')).join(' ').toLowerCase();
 
-  // German indicators (very common in German forms)
-  const germanWords = /geburtsdatum|geburtsort|staatsangehörigkeit|straße|hausnummer|postleitzahl|wohnort|name|vorname|geschlecht|reisepass|einreise|dauer|grund|aufenthalt|anschrift|beziehung|ehegatte|kinder|verpflichtung/i;
+  // Language keyword patterns with /gi flag for global matching
+  const languagePatterns = [
+    {
+      code: 'de',
+      label: 'German',
+      keywords: /geburtsdatum|geburtsort|staatsangehörigkeit|straße|hausnummer|postleitzahl|wohnort|vorname|geschlecht|reisepass|einreise|aufenthalt|anschrift|beziehung|ehegatte|kinder|verpflichtung|anmeldung|abmeldung|steuer|visum|antrag/gi,
+      minMatches: 3,
+    },
+    {
+      code: 'it',
+      label: 'Italian',
+      keywords: /nome|cognome|nascita|residenza|indirizzo|comune|provincia|telefono|email|cittadinanza|documento|passaporto|dichiarazione|modulo|anagrafe/gi,
+      minMatches: 3,
+    },
+    {
+      code: 'fr',
+      label: 'French',
+      keywords: /nom|prenom|naissance|residence|adresse|ville|telephone|email|nationalite|passeport|declaration|demande|formulaire|domicile/gi,
+      minMatches: 3,
+    },
+  ];
 
-  // Check for German language markers
-  if (germanWords.test(allText)) {
-    // Count how many German indicators are found
-    const germanMatches = allText.match(germanWords);
-    if (germanMatches && germanMatches.length >= 3) {
-      return { code: 'de', label: 'German' };
+  // Check each language pattern
+  for (const pattern of languagePatterns) {
+    const matches = allText.match(pattern.keywords);
+    if (matches && matches.length >= pattern.minMatches) {
+      return { code: pattern.code, label: pattern.label };
     }
   }
 
@@ -138,15 +158,31 @@ export function analyzeAcroFormFields(
   // Detect language from field names
   const detectedLang = detectLanguageFromFields(acroFields);
 
-  // Create the analysis summary
+  // Detect specific form type and get metadata
+  const fieldNames = acroFields.map(f => f.name);
+  let formMetadata = detectFormType(fieldNames, detectedLang.code);
+
+  // If no specific form detected, generate generic title for the language
+  if (!formMetadata) {
+    formMetadata = generateGenericFormTitle(detectedLang.code);
+  }
+
+  // Get English translation for display (user will select language later in DetectStep)
+  const englishTranslation = getFormTranslation(formMetadata, 'en');
+  const formTitleOriginal = formMetadata.originalTitle;
+  const formTitleTranslated = englishTranslation.title;
+  const summary = englishTranslation.description;
+
+  // Create the analysis summary (includes formMetadata for later language selection)
   const analysis: FormAnalysis = {
     detectedLanguage: detectedLang.code,
     detectedLanguageLabel: detectedLang.label,
-    formTitleOriginal: 'Form',
-    formTitleTranslated: 'Form',
-    summary: `This form contains ${acroFields.length} fields to fill.`,
+    formTitleOriginal,
+    formTitleTranslated,
+    summary,
     mandatoryFields: fields.filter(f => f.required),
     optionalFields: fields.filter(f => !f.required),
+    formMetadata,  // Include metadata so UI can translate to user's selected language
   };
 
   console.log('✅ ACROFORM ANALYSIS COMPLETE:', {

@@ -138,9 +138,12 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const { originalFileB64, originalFileMime, filledFields, fields, signatures, hasAcroFields } = options;
   const rawBytes = base64ToUint8Array(originalFileB64);
 
+  // Declare doc at function level so it's accessible to both Path A and Path B
+  let doc: PDFDocument;
+
   // ── PATH A: PDF with real AcroForm fields — fill by name, no guessing ──
   if (hasAcroFields && originalFileMime === 'application/pdf') {
-    const doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
+    doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
     const form = doc.getForm();
 
     // Embed Helvetica so we can regenerate appearance streams for auto-size and split fields
@@ -331,15 +334,15 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
     // field typography with pdf-lib defaults (wrong font size, too large for compact fields).
     // DO NOT call form.flatten() — the PDF viewer renders fields at the correct native
     // size and style when fields are left interactive.
-    // Just save with the filled values; the viewer handles appearance correctly.
-    return doc.save();
+    // Continue to Path B to fill any coordinate-overlay fields (those without pdfFieldName).
   }
 
-  // ── PATH B: Flat/scanned form — coordinate-based text overlay ──
-  let doc: PDFDocument;
+  // ── PATH B: Coordinate-based text overlay (also handles overlay fields from AcroForm PDFs) ──
+  // For AcroForm PDFs, doc is already loaded above. For scanned/image forms, load/create here.
   let textPositions: { items: TextItem[]; pageHeights: number[]; pageWidths: number[] } | null = null;
 
-  if (originalFileMime === 'application/pdf') {
+  if (originalFileMime === 'application/pdf' && !hasAcroFields) {
+    // Load PDF for Path B only if not already loaded in Path A
     doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
     try {
       textPositions = await extractTextPositions(rawBytes);
@@ -368,8 +371,15 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const pages = doc.getPages();
 
   // Separate data fields from signature fields
-  const dataFields = fields.filter((f) => f.type !== 'signature');
+  let dataFields = fields.filter((f) => f.type !== 'signature');
   const sigFields = fields.filter((f) => f.type === 'signature');
+
+  // In Path B, skip AcroForm fields that were already filled in Path A.
+  // Only render overlay fields (those with position but no pdfFieldName).
+  if (hasAcroFields) {
+    dataFields = dataFields.filter((f) => !f.pdfFieldName && f.position);
+  }
+
   const allFields = [...dataFields, ...sigFields];
 
   const page0 = pages[0];
@@ -377,7 +387,7 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
 
   // Detect the body font size of the form from its existing text (per page)
   // This ensures filled-in text visually matches the form's own typography
-  const pageFontSizes: number[] = pages.map((_, pIdx) => {
+  const pageFontSizes: number[] = pages.map((_: any, pIdx: number) => {
     if (!textPositions) return 10;
     const pageItems = textPositions.items.filter(i => i.page === pIdx);
     return detectBodyFontSize(pageItems);

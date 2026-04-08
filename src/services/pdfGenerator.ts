@@ -253,80 +253,27 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
           }
         } catch { /* field not found or wrong type */ }
       } else {
-        // Combined/split field — calculate padding to align each value to its visual column
+        // Combined/split field — only fill the LEFT column (splitIndex=0) in the AcroForm.
+        // RIGHT column (splitIndex=1) will be drawn via coordinate overlay in Path B.
 
-        // Get field dimensions — try sources in priority order:
-        // 1. PDF.js getAnnotations() — most reliable, works on any PDF structure
-        // 2. Pre-stored pdfFieldRect from analysis time
-        // 3. pdf-lib internal widget probe (often returns 0 but try anyway)
-        // 4. Page-proportional fallback (~82% of page width for full-row fields)
-        const pdfJsRect = pdfJsFieldRects.get(pdfFieldName);
-        let actualWidth = pdfJsRect?.width || sorted[0].pdfFieldRect?.width || 0;
-        let actualHeight = pdfJsRect?.height || sorted[0].pdfFieldRect?.height || 0;
-        if (actualWidth < 10) {
-          try {
-            const tfProbe = form.getTextField(pdfFieldName);
-            const probeWidgets = (tfProbe as any).acroField?.getWidgets?.() || [];
-            if (probeWidgets.length > 0) {
-              try {
-                const r = probeWidgets[0].getRectangle?.();
-                if (r?.width > 10) { actualWidth = r.width; actualHeight = r.height; }
-              } catch { /* ignore */ }
-              if (actualWidth < 10) {
-                try {
-                  const rawRect = probeWidgets[0].Rect?.();
-                  if (rawRect) {
-                    const n = [0,1,2,3].map((i: number) => rawRect.lookup(i)?.asNumber?.() ?? 0);
-                    actualWidth  = Math.abs(n[2] - n[0]);
-                    actualHeight = Math.abs(n[3] - n[1]);
-                  }
-                } catch { /* ignore */ }
-              }
-            }
-          } catch { /* keep pre-stored values */ }
-        }
-        // Page-proportional fallback: full-row combined fields span ~82% of page width
-        if (actualWidth < 20) {
-          actualWidth  = (doc.getPages()[0]?.getWidth() ?? 595) * 0.82;
-          actualHeight = actualHeight || 18;
-        }
-        const fieldWidth = actualWidth;
+        // Only use the left-column (splitIndex=0) value
+        const leftField = sorted.find(f => f.splitIndex === 0);
+        if (!leftField) continue;
 
-        const pdfFieldFontSize = sorted[0].pdfFieldFontSize ?? 0;
+        const leftFilled = filledFields.find(f => f.id === leftField.id);
+        if (!leftFilled || leftFilled.skipped || !leftFilled.value) continue;
+
+        const pdfFieldFontSize = leftField.pdfFieldFontSize ?? 0;
         const effectiveFontSize = pdfFieldFontSize > 0
           ? pdfFieldFontSize
-          : Math.max(7, Math.min(10, (actualHeight || 20) * 0.55));
-        // Use correct Helvetica char widths: avg ≈ 0.52em, space ≈ 0.278em
-        const avgCharWidth = effectiveFontSize * 0.52;
-        const spaceWidth = effectiveFontSize * 0.278;
-
-        let combinedValue = '';
-        for (let i = 0; i < sorted.length; i++) {
-          const field = sorted[i];
-          const filled = filledFields.find(f => f.id === field.id);
-          const value = (filled && !filled.skipped) ? (filled.value ?? '') : '';
-          combinedValue += value;
-
-          if (i < sorted.length - 1) {
-            // Calculate remaining space in this column after the value
-            const colWidthPts = fieldWidth * ((field.splitPct ?? 50) / 100);
-            const valuePts = value.length * avgCharWidth;
-            const remainingPts = Math.max(0, colWidthPts - valuePts - 2); // 2pt margin
-            const spacesNeeded = Math.max(1, Math.round(remainingPts / spaceWidth));
-            combinedValue += ' '.repeat(spacesNeeded);
-          }
-        }
+          : Math.max(7, Math.min(10, (leftField.pdfFieldRect?.height ?? 20) * 0.55));
 
         try {
-          if (combinedValue.trim()) {
-            const tf = form.getTextField(pdfFieldName);
-            tf.setText(combinedValue);
-            tf.setFontSize(effectiveFontSize);
-            // CRITICAL: regenerate appearance stream so the viewer uses our exact font size.
-            // Without this, auto-size fields render at the viewer's own calculated size,
-            // making the spacing calculation wrong and columns misaligned.
-            try { tf.updateAppearances(helvetica); } catch { /* ignore if field uses custom font */ }
-          }
+          const tf = form.getTextField(pdfFieldName);
+          tf.setText(leftFilled.value);
+          tf.setFontSize(effectiveFontSize);
+          // CRITICAL: regenerate appearance stream so the viewer uses our exact font size.
+          try { tf.updateAppearances(helvetica); } catch { /* ignore if field uses custom font */ }
         } catch { /* field not found */ }
       }
     }

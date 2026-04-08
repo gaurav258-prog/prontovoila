@@ -244,6 +244,15 @@ SPLIT vs SEPARATE FIELDS:
 - Two different pdfFieldNames on the same visual row → SEPARATE fields, each gets its own entry
 - ONE pdfFieldName spanning both columns (width > 60% of page) → SPLIT field, use splitIndex/splitPct
 
+KNOWN SPLIT FIELDS (create TWO entries with same pdfFieldName, splitIndex 0 and 1):
+- "Name Vorname" → left="Last Name" (splitIndex:0), right="First Name" (splitIndex:1)
+- "Name Vorname_2" → left="Last Name" (splitIndex:0), right="First Name" (splitIndex:1)
+- "Geburtsdatum Geburtsort" → left="Date of Birth" (splitIndex:0), right="Place of Birth" (splitIndex:1)
+- "GeburtsdatumGeschlechtwm Geburtsort" → left="Date/Gender" (splitIndex:0), right="Place of Birth" (splitIndex:1)
+- "Staatsangehörigkeit Beruf  Arbeitgeber" → left="Nationality" (splitIndex:0), right="Occupation/Employer" (splitIndex:1)
+- "Staatsangehörigkeit Reisepassnummer" → left="Nationality" (splitIndex:0), right="Passport Number" (splitIndex:1)
+- "Straße  Hausnummer Postleitzahl  Wohnort" → left="Street/House Number" (splitIndex:0), right="Postcode/City" (splitIndex:1)
+
 YES/NO CHECKBOX PAIRS: Create ONE field entry using the ja/yes checkbox pdfFieldName, set type="yesno", add pairedNeinPdfFieldName.
 
 NAME FIELDS: "Name"/"Surname"/"Family name" ALWAYS collects the last name. Be explicit in questions.

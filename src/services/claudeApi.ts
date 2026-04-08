@@ -158,12 +158,77 @@ export async function analyzeForm(
 
   let acroFields: AcroField[] = [];
   let pageWidths: number[] = [];
+  let fieldContextMap = new Map<string, string[]>();
+
   if (fileMime === 'application/pdf') {
     const rawBytes = Uint8Array.from(atob(fileB64), c => c.charCodeAt(0));
     const result = await extractAcroFields(rawBytes);
     acroFields = result.fields;
     pageWidths = result.pageWidths;
+
+    // Extract text context for each field to help Claude understand unclear names
+    try {
+      const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+      if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+
+      const pdfJsDoc = await pdfjsLib.getDocument({
+        data: rawBytes,
+        useSystemFonts: true,
+        isEvalSupported: false,
+        useWorkerFetch: false,
+        disableAutoFetch: true,
+      }).promise;
+
+      // For each page, extract text and find nearby text for each field
+      for (let pageNum = 1; pageNum <= pdfJsDoc.numPages; pageNum++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const page = await pdfJsDoc.getPage(pageNum) as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const textContent = await page.getTextContent() as any;
+
+        // Build text items list for this page
+        const textItems: Array<{ str: string; x: number; y: number }> = [];
+        for (const item of textContent.items) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ti = item as any;
+          if (ti.str?.trim()) {
+            textItems.push({
+              str: ti.str.trim(),
+              x: ti.transform?.[4] ?? 0,
+              y: ti.transform?.[5] ?? 0,
+            });
+          }
+        }
+
+        // For each field on this page, find nearby text
+        for (const field of acroFields) {
+          if (field.rect.page !== pageNum) continue;
+          if (fieldContextMap.has(field.name)) continue;
+
+          const nearby: string[] = [];
+          const searchRadius = 150;
+
+          for (const text of textItems) {
+            const dx = Math.abs(text.x - field.rect.x);
+            const dy = Math.abs(text.y - field.rect.y);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < searchRadius) {
+              nearby.push(text.str);
+            }
+          }
+
+          // Store top 3 nearby texts
+          if (nearby.length > 0) {
+            fieldContextMap.set(field.name, nearby.slice(0, 3));
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not extract text context, continuing without it');
+    }
   }
+
   const hasAcroFields = acroFields.length > 0;
 
   let systemPrompt: string;
@@ -189,7 +254,9 @@ export async function analyzeForm(
       .map(f => {
         const pos = `"pos":{"x":${f.rect.x},"y":${f.rect.y},"w":${f.rect.width},"h":${f.rect.height},"page":${f.rect.page}}`;
         const sep = separateFieldNames.has(f.name) ? ', "separate":true' : '';
-        const base = `{ "pdfFieldName": "${f.name}", "type": "${f.type}", ${pos}${sep}`;
+        const context = fieldContextMap.get(f.name);
+        const contextStr = context && context.length > 0 ? `, "nearbyLabels": ${JSON.stringify(context)}` : '';
+        const base = `{ "pdfFieldName": "${f.name}", "type": "${f.type}", ${pos}${sep}${contextStr}`;
         if (f.options && f.options.length > 0) {
           return `  ${base}, "options": ${JSON.stringify(f.options)} }`;
         }
@@ -205,6 +272,13 @@ ${fieldList}
 ]
 
 Your job: look at the form visually and map each AcroForm field to human-readable information.
+
+IMPORTANT: For fields with unclear names (like "Text1", "fill_1"), use the "nearbyLabels" array
+to understand what that field is asking for. Example: if a field is named "Text1" but has
+nearbyLabels: ["Reisepassnummer", "Passport"], then this is the passport number field.
+
+The nearbyLabels are actual text extracted from near the field on the form — use them to
+generate meaningful questions and labels instead of generic ones.
 
 Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
 {

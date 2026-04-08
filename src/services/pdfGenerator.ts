@@ -139,7 +139,7 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   const rawBytes = base64ToUint8Array(originalFileB64);
 
   // Declare doc at function level so it's accessible to both Path A and Path B
-  let doc: PDFDocument;
+  let doc: PDFDocument | null = null;
 
   // ── PATH A: PDF with real AcroForm fields — fill by name, no guessing ──
   if (hasAcroFields && originalFileMime === 'application/pdf') {
@@ -341,34 +341,38 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
   // For AcroForm PDFs, doc is already loaded above. For scanned/image forms, load/create here.
   let textPositions: { items: TextItem[]; pageHeights: number[]; pageWidths: number[] } | null = null;
 
-  if (originalFileMime === 'application/pdf' && !hasAcroFields) {
-    // Load PDF for Path B only if not already loaded in Path A
-    doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
-    try {
-      textPositions = await extractTextPositions(rawBytes);
-    } catch {
-      // Fall back to estimate-based positioning if text extraction fails
-    }
-  } else {
-    // Image: create a PDF with the image as background
-    doc = await PDFDocument.create();
-    let img;
-    if (originalFileMime === 'image/png') {
-      img = await doc.embedPng(rawBytes);
+  if (!doc) {
+    // doc wasn't initialized in Path A, so either it's a non-AcroForm PDF or an image
+    if (originalFileMime === 'application/pdf') {
+      doc = await PDFDocument.load(rawBytes, { ignoreEncryption: true });
+      try {
+        textPositions = await extractTextPositions(rawBytes);
+      } catch {
+        // Fall back to estimate-based positioning if text extraction fails
+      }
     } else {
-      img = await doc.embedJpg(rawBytes);
+      // Image: create a PDF with the image as background
+      doc = await PDFDocument.create();
+      let img;
+      if (originalFileMime === 'image/png') {
+        img = await doc.embedPng(rawBytes);
+      } else {
+        img = await doc.embedJpg(rawBytes);
+      }
+      const imgW = img.width;
+      const imgH = img.height;
+      const pageW = 595;
+      const pageH = Math.min((imgH / imgW) * pageW, 842);
+      const page = doc.addPage([pageW, pageH]);
+      page.drawImage(img, { x: 0, y: 0, width: pageW, height: pageH });
     }
-    const imgW = img.width;
-    const imgH = img.height;
-    const pageW = 595;
-    const pageH = Math.min((imgH / imgW) * pageW, 842);
-    const page = doc.addPage([pageW, pageH]);
-    page.drawImage(img, { x: 0, y: 0, width: pageW, height: pageH });
   }
 
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const pages = doc.getPages();
+  // At this point, doc is guaranteed to be non-null
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const font = await doc!.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc!.embedFont(StandardFonts.HelveticaBold);
+  const pages = doc!.getPages();
 
   // Separate data fields from signature fields
   let dataFields = fields.filter((f) => f.type !== 'signature');
@@ -525,7 +529,8 @@ export async function generateOverlayPdf(options: OverlayPdfOptions): Promise<Ui
     }
   });
 
-  return doc.save();
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return doc!.save();
 }
 
 // Helper to embed signature — needs to be called with await in the main function

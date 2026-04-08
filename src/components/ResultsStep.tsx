@@ -8,21 +8,26 @@ export default function ResultsStep() {
 
   const handleDownloadFilledPdf = async () => {
     if (!fileB64 || !fileMime) return;
-    const pdfBytes = await generateOverlayPdf({
-      originalFileB64: fileB64,
-      originalFileMime: fileMime,
-      filledFields,
-      fields,
-      signatures,
-      hasAcroFields,
-    });
-    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(file?.name || 'form').replace(/\.[^.]+$/, '')}-filled.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const pdfBytes = await generateOverlayPdf({
+        originalFileB64: fileB64,
+        originalFileMime: fileMime,
+        filledFields,
+        fields,
+        signatures,
+        hasAcroFields,
+      });
+      const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(file?.name || 'form').replace(/\.[^.]+$/, '')}-filled.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert(`Failed to download form: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   };
 
   const handleDownloadSummaryPdf = async () => {

@@ -146,7 +146,7 @@ export async function extractAcroFields(pdfBytes: Uint8Array): Promise<{ fields:
   }
 }
 
-const API_KEY = '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';
+const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
 /**
